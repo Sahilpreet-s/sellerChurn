@@ -31,7 +31,7 @@ sleep 2
 
 # ── 3. React frontend ───────────────────────────────────────────────────────
 echo "▶ Starting React frontend on :3000..."
-cd "$ROOT"
+cd "$ROOT/frontend"
 bun run dev &
 FRONTEND_PID=$!
 

@@ -154,3 +154,51 @@
     color: var(--color-foreground);
   }
 }
+
+/* ─── Entrance animations ─────────────────────────────────────────────────── */
+
+@keyframes slide-in-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-14px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes risk-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50%       { box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive) 30%, transparent); }
+}
+
+@layer utilities {
+  .animate-slide-in-up {
+    animation: slide-in-up 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-fade-in-scale {
+    animation: fade-in-scale 0.35s ease both;
+  }
+
+  /* 3-D card — driven by --rx / --ry CSS custom properties set from JS */
+  .tilt-card {
+    transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 0.12s ease, box-shadow 0.3s ease;
+    will-change: transform;
+  }
+
+  /* Subtle pulsing glow for High-risk badges */
+  .risk-high-badge {
+    animation: risk-pulse 2.5s ease-in-out infinite;
+  }
+}

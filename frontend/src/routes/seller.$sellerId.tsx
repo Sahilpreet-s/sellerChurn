@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, useCallback } from "react";
 import {
-  getSeller as getMockSeller, riskBand, metricLabels, statusMeta,
+  riskBand, metricLabels, statusMeta,
   churnCauseMeta, archetypeMeta,
   type Seller, type MetricHistory, type CallInsight, type ChurnCause,
 } from "@/lib/mock-sellers";
@@ -18,7 +18,7 @@ import {
   ArrowLeft, AlertTriangle, TrendingDown, TrendingUp, Phone, Quote,
   Zap, Brain, CheckCircle2, Upload, FileText,
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
@@ -29,15 +29,14 @@ export const Route = createFileRoute("/seller/$sellerId")({
       const seller = await fetchSeller(params.sellerId);
       return { seller };
     } catch {
-      const seller = getMockSeller(params.sellerId) ?? null;
-      return { seller };
+      return { seller: null };
     }
   },
   notFoundComponent: () => (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
         <p className="text-muted-foreground">Seller not found.</p>
-        <Link to="/" className="mt-4 inline-block text-primary underline">Back to dashboard</Link>
+        <Link to="/" search={{ view: "churn" }} className="mt-4 inline-block text-primary underline">Back to dashboard</Link>
       </div>
     </div>
   ),
@@ -48,7 +47,9 @@ export const Route = createFileRoute("/seller/$sellerId")({
 
 const MONTHS_LABEL = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function fmtDate(iso: string) {
+  if (!iso) return "—";
   const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
   return `${d} ${MONTHS_LABEL[m - 1]} ${y}`;
 }
 
@@ -61,6 +62,7 @@ function SellerDetail() {
 
   // Outcome logging state
   const [outcomeSaved, setOutcomeSaved] = useState<string | null>(null);
+  const [outcomeError, setOutcomeError] = useState<string | null>(null);
   const [outcomeLoading, setOutcomeLoading] = useState(false);
   const [totalOutcomes, setTotalOutcomes] = useState<number | null>(null);
 
@@ -81,24 +83,15 @@ function SellerDetail() {
   const [merpLoading, setMerpLoading] = useState(false);
   const [merpError, setMerpError] = useState<string | null>(null);
 
-  if (!seller) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30">
-        <div className="text-center">
-          <p className="text-muted-foreground">Seller not found.</p>
-          <Button onClick={() => router.navigate({ to: "/" })} className="mt-4">Back to dashboard</Button>
-        </div>
-      </div>
-    );
-  }
+  // Audio upload state
+  const [audioError, setAudioError] = useState<string | null>(null);
 
-  const band = riskBand(seller.riskScore);
-  const causeMeta = churnCauseMeta[seller.churnCause as ChurnCause];
-  const archMeta = archetypeMeta[seller.archetype as keyof typeof archetypeMeta] ?? { emoji: "⬜", description: "" };
+  // ── All hooks must be declared before any early return ──────────────────────
 
   const handleOutcome = useCallback(async (outcome: string) => {
     if (!seller || outcomeLoading) return;
     setOutcomeLoading(true);
+    setOutcomeError(null);
     try {
       const result = await logOutcome(seller.id, outcome);
       setOutcomeSaved(outcome);
@@ -107,8 +100,7 @@ function SellerDetail() {
         setSeller(s => s ? { ...s, status: "Resolved" } : s);
       }
     } catch {
-      // If API not available, just update local state
-      setOutcomeSaved(outcome);
+      setOutcomeError("Could not save outcome — check that the Go backend is running.");
     } finally {
       setOutcomeLoading(false);
     }
@@ -121,7 +113,7 @@ function SellerDetail() {
     try {
       const result = await fetchRetentionGuide(seller.id);
       setGuideSections(result.sections);
-    } catch (e) {
+    } catch {
       setGuideError("Could not connect to AI service. Make sure the Go backend is running.");
     } finally {
       setGuideLoading(false);
@@ -149,7 +141,7 @@ function SellerDetail() {
     try {
       const result = await triggerRetraining();
       setRetrainResult(`Retrained on ${result.trainingExamples} examples. AUC: ${result.auc.toFixed(3)} (was ${result.previousAuc.toFixed(3)}). ${result.swapped ? "New model deployed." : "No improvement — current model kept."}`);
-      handleLoadML();
+      await handleLoadML();
     } catch {
       setRetrainResult("Retrain failed — ML service may not be running.");
     }
@@ -164,7 +156,7 @@ function SellerDetail() {
       setSeller(s => s ? { ...s, callInsights: [insight, ...(s.callInsights ?? [])] } : s);
       setMerpNote("");
       setMerpAgent("");
-    } catch (e) {
+    } catch {
       setMerpError("Could not extract MERP note — check that the Go backend is running.");
     } finally {
       setMerpLoading(false);
@@ -174,25 +166,46 @@ function SellerDetail() {
   const handleAudioUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !seller) return;
+    setAudioError(null);
     try {
       const insight = await uploadAudio(file, seller.id, "Demo Agent");
       setSeller(s => s ? { ...s, callInsights: [insight, ...(s.callInsights ?? [])] } : s);
     } catch {
-      alert("Audio upload failed — check that the Go backend is running.");
+      setAudioError("Audio upload failed — check that the Go backend is running.");
     }
     e.target.value = "";
   }, [seller]);
 
+  // ── Early return after all hooks ────────────────────────────────────────────
+
+  if (!seller) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Seller not found.</p>
+          <Button onClick={() => router.navigate({ to: "/", search: { view: "churn" } })} className="mt-4">Back to dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const band = riskBand(seller.riskScore);
+  const causeMeta = churnCauseMeta[seller.churnCause as ChurnCause] ?? {
+    label: "Unknown", className: "bg-muted text-muted-foreground border-border",
+    owner: "—", description: "",
+  };
+  const archMeta = archetypeMeta[seller.archetype as keyof typeof archetypeMeta] ?? { emoji: "⬜", description: "" };
+
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
+    <div className="min-h-screen">
+      <header className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-20">
         <div className="mx-auto max-w-7xl px-6 py-5">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground">
+          <Link to="/" search={{ view: "churn" }} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-all duration-150 hover:text-foreground hover:-translate-x-0.5">
             <ArrowLeft className="h-4 w-4" /> Back to cohort
           </Link>
           <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
+              <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary/25 to-primary/5 text-lg font-semibold text-primary ring-2 ring-primary/10 shadow-lg">
                 {seller.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 {seller.priorChurn && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive border-2 border-background flex items-center justify-center text-[8px] text-white font-bold" title="Prior churn">!</span>
@@ -203,7 +216,7 @@ function SellerDetail() {
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                   <span>{seller.company} · {seller.city}</span>
                   <Badge variant="outline">{seller.packageType}</Badge>
-                  <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${statusMeta[seller.status as keyof typeof statusMeta]?.className}`}>
+                  <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${statusMeta[seller.status as keyof typeof statusMeta]?.className ?? ""}`}>
                     {seller.status}
                   </span>
                   <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${causeMeta.className}`} title={causeMeta.description}>
@@ -235,45 +248,45 @@ function SellerDetail() {
 
         {/* Summary cards */}
         <div className="grid gap-4 md:grid-cols-5">
-          <Card className={band === "High" ? "border-destructive/40 bg-destructive/5" : band === "Medium" ? "border-warning/40 bg-warning/5" : "border-success/40 bg-success/5"}>
+          <Card className={`transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none ${band === "High" ? "border-destructive/40 bg-destructive/5" : band === "Medium" ? "border-warning/40 bg-warning/5" : "border-success/40 bg-success/5"}`}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle className="h-4 w-4" /> Risk score</div>
               <p className="mt-2 text-4xl font-semibold tracking-tight">{seller.riskScore}<span className="text-lg text-muted-foreground">/100</span></p>
               <p className="mt-1 text-sm font-medium">{band} risk of churn</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none">
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">Renewal date</p>
               <p className="mt-2 text-2xl font-semibold tracking-tight">{fmtDate(seller.renewalDate)}</p>
               <p className="mt-1 text-sm text-muted-foreground">in {seller.daysToRenewal} days</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none">
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">Annual revenue</p>
               <p className="mt-2 text-2xl font-semibold tracking-tight">₹{(seller.arr / 1000).toFixed(0)}k</p>
               <p className="mt-1 text-sm text-muted-foreground">{seller.category}</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none">
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">Churn cause</p>
               <p className="mt-2 text-xl font-semibold tracking-tight">{causeMeta.label}</p>
               <p className="mt-1 text-xs text-muted-foreground">→ {causeMeta.owner}</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none">
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">Seller ID</p>
               <p className="mt-2 text-2xl font-semibold tracking-tight">{seller.id}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{seller.churnCauseReason.slice(0, 55)}…</p>
+              <p className="mt-1 text-xs text-muted-foreground">{(seller.churnCauseReason ?? "").slice(0, 55)}{seller.churnCauseReason?.length > 55 ? "…" : ""}</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Why flagged */}
-        <Card>
+        <Card className="transition-all duration-200 hover:shadow-md">
           <CardHeader><CardTitle className="text-base">Why this seller is flagged</CardTitle></CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
@@ -297,7 +310,7 @@ function SellerDetail() {
               ["guide", "Retention guide"],
               ["ml", "ML insights"],
             ].map(([v, label]) => (
-              <TabsTrigger key={v} value={v} className="rounded-md border bg-background px-4 py-2 text-foreground shadow-sm hover:bg-muted data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:border-foreground">
+              <TabsTrigger key={v} value={v} className="rounded-lg border bg-background px-4 py-2 text-foreground shadow-sm transition-all duration-150 hover:bg-muted hover:scale-[1.02] data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:border-foreground data-[state=active]:shadow-md data-[state=active]:scale-[1.02]">
                 {label}
               </TabsTrigger>
             ))}
@@ -317,7 +330,7 @@ function SellerDetail() {
           <TabsContent value="leads" className="mt-4">
             <h2 className="mb-1 text-lg font-semibold tracking-tight">IndiaMART leads — past 6 months</h2>
             <p className="mb-4 text-sm text-muted-foreground">Monthly volume of buyer enquiries, Buy-Leads consumed, and PNS calls received.</p>
-            <LeadsChart seller={seller} />
+            <LeadsChart />
           </TabsContent>
 
           {/* ── Call insights ── */}
@@ -327,13 +340,14 @@ function SellerDetail() {
                 <h2 className="text-lg font-semibold tracking-tight">Sales call insights</h2>
                 <p className="text-sm text-muted-foreground">Issues raised by seller in calls — surfaced as churn drivers.</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col items-end gap-2">
                 <label className="cursor-pointer">
                   <input type="file" accept="audio/*" className="hidden" onChange={handleAudioUpload} />
                   <span className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted cursor-pointer">
                     <Upload className="h-4 w-4" /> Process audio
                   </span>
                 </label>
+                {audioError && <p className="text-xs text-destructive">{audioError}</p>}
               </div>
             </div>
 
@@ -391,7 +405,7 @@ function SellerDetail() {
                   <Brain className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   <p className="text-muted-foreground"><span className="font-medium text-foreground">AI-generated guide</span> — personalized using this seller's exact metrics and call history.</p>
                 </div>
-                <GuideSectionList sections={guideSections} seller={seller} />
+                <GuideSectionList sections={guideSections} />
               </div>
             ) : (
               <RetentionGuide seller={seller} />
@@ -422,6 +436,9 @@ function SellerDetail() {
                     ✗ Log as Churned
                   </Button>
                 </div>
+                {outcomeError && (
+                  <p className="mt-2 text-xs text-destructive text-center">{outcomeError}</p>
+                )}
                 <p className="mt-2 text-xs text-muted-foreground text-center">Each outcome saved = one labeled training example for the XGBoost model</p>
               </div>
             )}
@@ -517,7 +534,6 @@ function SellerDetail() {
                         <span className="text-muted-foreground">Last trained</span>
                         <span className="font-semibold text-xs">{mlStats.lastTrainedAt ? new Date(mlStats.lastTrainedAt).toLocaleString() : "—"}</span>
                       </div>
-                      {/* Progress bar to next retrain */}
                       <div>
                         <div className="flex justify-between text-xs text-muted-foreground mb-1">
                           <span>Progress to auto-retrain</span>
@@ -567,8 +583,8 @@ function SellerDetail() {
 function buildReasons(s: Seller): string[] {
   const out: string[] = [];
   const m = s.metrics;
-  const drop = (h: MetricHistory[]) => h[0].value - h[h.length - 1].value;
-  const last = (h: MetricHistory[]) => h[h.length - 1].value;
+  const drop = (h: MetricHistory[]) => h.length >= 2 ? h[0].value - h[h.length - 1].value : 0;
+  const last = (h: MetricHistory[]) => h.length > 0 ? h[h.length - 1].value : 0;
 
   if (s.priorChurn) out.push("Previously on Free/lapsed plan — prior churn is the #1 predictor of repeat churn (risk elevated 30%).");
   if (drop(m.loginPct) > 8)          out.push(`Login activity dropped ${drop(m.loginPct).toFixed(0)}% over 3 months (now ${last(m.loginPct).toFixed(0)}%).`);
@@ -586,14 +602,14 @@ function buildReasons(s: Seller): string[] {
   return out;
 }
 
-// ─── Rule-based guide (fallback) ─────────────────────────────────────────────
+// ─── Rule-based guide ─────────────────────────────────────────────────────────
 
 type GuideEntry = { title: string; pitch: string; actions: string[] };
 
 function buildGuide(s: Seller): GuideEntry[] {
   const m = s.metrics;
-  const drop = (h: MetricHistory[]) => h[0].value - h[h.length - 1].value;
-  const last = (h: MetricHistory[]) => h[h.length - 1].value;
+  const drop = (h: MetricHistory[]) => h.length >= 2 ? h[0].value - h[h.length - 1].value : 0;
+  const last = (h: MetricHistory[]) => h.length > 0 ? h[h.length - 1].value : 0;
   const out: GuideEntry[] = [];
 
   if (s.priorChurn) out.push({
@@ -690,16 +706,16 @@ function RetentionGuide({ seller }: { seller: Seller }) {
           "Hi {seller.name.split(" ")[0]}, your renewal is in {seller.daysToRenewal} days. Before we discuss it, I want to walk you through what we've seen on your account in the last 90 days and how we can fix it together."
         </p>
       </div>
-      <GuideSectionList sections={sections} seller={seller} />
+      <GuideSectionList sections={sections} />
     </div>
   );
 }
 
-function GuideSectionList({ sections, seller }: { sections: GuideEntry[] | GuideSection[]; seller: Seller }) {
+function GuideSectionList({ sections }: { sections: GuideEntry[] | GuideSection[] }) {
   return (
     <>
       {sections.map((sec, i) => (
-        <div key={i} className="rounded-md border p-3">
+        <div key={i} className="rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20 animate-slide-in-up" style={{ animationDelay: `${i * 60}ms` }}>
           <p className="text-sm font-semibold">{i + 1}. {sec.title}</p>
           <p className="mt-1 text-sm text-muted-foreground">{sec.pitch}</p>
           <ul className="mt-2 space-y-1">
@@ -719,6 +735,17 @@ function GuideSectionList({ sections, seller }: { sections: GuideEntry[] | Guide
 // ─── MetricCard ───────────────────────────────────────────────────────────────
 
 function MetricCard({ label, data, invert }: { label: string; data: MetricHistory[]; invert?: boolean }) {
+  if (data.length === 0) {
+    return (
+      <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <CardContent className="pt-6">
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="mt-1 text-sm text-muted-foreground">No data</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const first = data[0].value;
   const last = data[data.length - 1].value;
   const delta = last - first;
@@ -726,7 +753,7 @@ function MetricCard({ label, data, invert }: { label: string; data: MetricHistor
   const TrendIcon = delta >= 0 ? TrendingUp : TrendingDown;
 
   return (
-    <Card>
+    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
@@ -797,7 +824,7 @@ function CallInsightsList({ insights }: { insights: CallInsight[] }) {
       )}
       <div className="grid gap-3 md:grid-cols-2">
         {insights.map((c) => (
-          <Card key={c.id}>
+          <Card key={c.id} className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 text-sm">
@@ -845,45 +872,11 @@ function CallInsightsList({ insights }: { insights: CallInsight[] }) {
 
 // ─── LeadsChart ───────────────────────────────────────────────────────────────
 
-function LeadsChart({ seller }: { seller: Seller }) {
-  const months = ["Dec", "Jan", "Feb", "Mar", "Apr", "May"];
-  const seed = seller.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const wiggle = (i: number, k: number) => {
-    const x = Math.sin(seed * 13.37 + i * 7.7 + k * 3.3) * 1000;
-    return Math.round((x - Math.floor(x)) * 20 - 10);
-  };
-  const blLatest = seller.metrics.blConsumptionPct[seller.metrics.blConsumptionPct.length - 1].value;
-  const pnsLatest = seller.metrics.pnsPickupRatePct[seller.metrics.pnsPickupRatePct.length - 1].value;
-  const baseEnq = 80 + Math.round(seller.arr / 4000);
-  const trendFactor = seller.riskScore > 55 ? -1 : seller.riskScore > 30 ? -0.4 : 0.3;
-
-  const data = months.map((m, i) => {
-    const drift = Math.round(trendFactor * i * 6);
-    return {
-      month: m,
-      enquiries: Math.max(10, baseEnq + drift + wiggle(i, 1)),
-      bls: Math.max(5, Math.round((baseEnq + drift) * (blLatest / 100)) + wiggle(i, 2)),
-      pnsCalls: Math.max(5, Math.round((baseEnq + drift) * (pnsLatest / 100) * 0.8) + wiggle(i, 3)),
-    };
-  });
-
+function LeadsChart() {
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line type="monotone" dataKey="enquiries" name="Enquiries"  stroke="var(--primary)"     strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="bls"        name="Buy-Leads" stroke="var(--warning)"     strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="pnsCalls"   name="PNS calls" stroke="var(--success)"     strokeWidth={2} dot={{ r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      <CardContent className="py-16 text-center text-sm text-muted-foreground">
+        Lead volume data not available — requires IndiaMART warehouse integration.
       </CardContent>
     </Card>
   );

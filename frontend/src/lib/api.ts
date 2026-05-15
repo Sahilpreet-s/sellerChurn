@@ -1,6 +1,6 @@
 import type { Seller, CallInsight } from "./mock-sellers";
 
-const BASE = "http://localhost:8080/api/v1";
+const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8080/api/v1";
 
 async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
   const url = new URL(BASE + path);
