@@ -273,7 +273,8 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isShowcase = pathname === "/showcase";
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Sidebar hidden — set to true to restore
+  const [sidebarOpen] = useState(false);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -285,16 +286,7 @@ function RootComponent() {
           <div className="h-[3px] bg-gradient-to-r from-primary/40 via-primary to-primary/40 shrink-0" />
 
           <div className="flex flex-1 overflow-hidden relative">
-            {sidebarOpen && <AppSidebar onCollapse={() => setSidebarOpen(false)} />}
-            {!sidebarOpen && (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="absolute left-3 top-3 z-10 p-1.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
-                title="Open sidebar"
-              >
-                <PanelLeft className="h-4 w-4" />
-              </button>
-            )}
+            {sidebarOpen && <AppSidebar onCollapse={() => {}} />}
             <main className="flex-1 overflow-y-auto bg-gradient-to-b from-muted/20 to-muted/40 [scrollbar-gutter:stable]">
               <Outlet />
             </main>
