@@ -1,0 +1,667 @@
+openapi: 3.0.3
+info:
+  title: SellerPulse 360° API
+  description: Seller churn early warning and retention system for IndiaMART KAMs.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+tags:
+  - name: Sellers
+    description: Seller listing and detail
+  - name: Outcomes
+    description: KAM retention call outcomes and feedback
+  - name: Guide
+    description: AI-generated retention call guides
+  - name: Audio
+    description: Call transcript processing
+  - name: Patterns
+    description: Systemic risk pattern detection
+  - name: ML
+    description: XGBoost churn prediction model
+
+paths:
+
+  /sellers:
+    get:
+      tags: [Sellers]
+      summary: List all sellers
+      description: Returns all 20 sellers enriched with risk score, churn cause, and archetype. Supports filtering.
+      parameters:
+        - name: risk
+          in: query
+          description: Filter by risk band
+          schema:
+            type: string
+            enum: [High, Medium, Low]
+        - name: status
+          in: query
+          description: Filter by seller status
+          schema:
+            type: string
+            enum: [Pending, Resolved, Escalated, Churned]
+        - name: package
+          in: query
+          description: Filter by package type
+          schema:
+            type: string
+            enum: [Catalog, Silver, Gold, Platinum, Star]
+        - name: q
+          in: query
+          description: Search by seller name, company, or ID (case-insensitive)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of enriched sellers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Seller'
+
+  /sellers/{id}:
+    get:
+      tags: [Sellers]
+      summary: Get seller by ID
+      description: Returns full seller detail including call insights merged from seed data and SQLite.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: S-20001
+      responses:
+        '200':
+          description: Seller detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Seller'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sellers/{id}/outcome:
+    post:
+      tags: [Outcomes]
+      summary: Log retention call outcome
+      description: |
+        Saves the result of a KAM retention call. Captures both the outcome label
+        (for ML training) and structured executive feedback (disposition, churn reasons,
+        competitor intelligence) that metrics alone cannot provide.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: S-20001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutcomeRequest'
+            example:
+              outcome: Escalated
+              notes: Very frustrated, threatening to leave
+              disposition: Hostile
+              churnReasons:
+                - LEAD_QUALITY
+                - COMPETITOR_SWITCH
+              competitorMentioned: IndiaTrade
+              execCommitment: Escalate BL filter issue to product team by Friday
+              followUpDate: "2026-05-22"
+              customReason: Also exploring Alibaba B2B
+      responses:
+        '200':
+          description: Outcome logged with ML training progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutcomeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sellers/{id}/guide:
+    post:
+      tags: [Guide]
+      summary: Generate AI retention call guide
+      description: |
+        Calls Gemini 2.5 Flash with the seller's full profile and returns a personalized
+        retention call guide with talking points, pitch scripts, and recommended actions.
+        Response is cached per seller after first generation.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: S-20001
+      responses:
+        '200':
+          description: Structured retention guide sections
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuideResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Gemini API error or key not configured
+
+  /audio/upload:
+    post:
+      tags: [Audio]
+      summary: Process call transcript
+      description: |
+        Accepts a call transcript and runs it through Gemini to extract a structured
+        CallInsight — sentiment, issues, competitor mentions, exec commitments, and
+        seller disposition. Saved to SQLite and returned.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AudioUploadRequest'
+            example:
+              sellerId: S-20001
+              agent: Rahul Sharma
+              durationMin: 12
+              transcript: |
+                Exec: Hi Arjun, calling about your renewal in 38 days.
+                Seller: Honestly not happy. Leads are all retail buyers.
+                Thinking of switching to IndiaTrade.
+      responses:
+        '200':
+          description: Extracted call insight
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallInsight'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          description: Gemini extraction error
+
+  /patterns:
+    get:
+      tags: [Patterns]
+      summary: Get systemic pattern alerts
+      description: |
+        Returns pattern alerts detected across all sellers at startup.
+        Identifies systemic issues affecting multiple sellers — lead-fit mismatches,
+        seasonal dips, shared platform failures, and prior churn cohorts.
+      responses:
+        '200':
+          description: List of pattern alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PatternAlert'
+
+  /stats:
+    get:
+      tags: [Sellers]
+      summary: Get portfolio-level stats
+      description: Returns high-level counts by risk band and total ARR at risk.
+      responses:
+        '200':
+          description: Portfolio statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+
+  /ml/prediction/{id}:
+    get:
+      tags: [ML]
+      summary: Get ML churn prediction for a seller
+      description: |
+        Returns XGBoost churn probability (0–1) and top 3 features driving the prediction.
+        Requires the Python ML service on :8001 to be running.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: S-20001
+      responses:
+        '200':
+          description: ML prediction result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MLPrediction'
+        '503':
+          description: ML service unavailable
+
+  /ml/stats:
+    get:
+      tags: [ML]
+      summary: Get ML model statistics
+      description: Returns current model AUC, training example count, and feature importances.
+      responses:
+        '200':
+          description: Model statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MLStats'
+        '503':
+          description: ML service unavailable
+
+  /ml/train:
+    post:
+      tags: [ML]
+      summary: Trigger XGBoost retraining
+      description: |
+        Manually triggers retraining on all labeled outcomes collected so far.
+        Model is only swapped if new AUC improves by more than 1% over current model.
+      responses:
+        '200':
+          description: Training result with new AUC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MLStats'
+        '503':
+          description: ML service unavailable
+
+components:
+
+  schemas:
+
+    MetricHistory:
+      type: object
+      properties:
+        month:
+          type: string
+          example: May
+        value:
+          type: number
+          example: 42.5
+
+    SellerMetrics:
+      type: object
+      properties:
+        loginPct:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricHistory'
+        blConsumptionPct:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricHistory'
+        pnsPickupRatePct:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricHistory'
+        lmsReplyRatePct:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricHistory'
+        retailBlRecommendedPct:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricHistory'
+        catalogScore:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricHistory'
+        cqs:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricHistory'
+
+    CallInsight:
+      type: object
+      properties:
+        id:
+          type: string
+          example: AUDIO-S-20001-1747382400
+        sellerId:
+          type: string
+          example: S-20001
+        date:
+          type: string
+          format: date
+          example: "2026-05-16"
+        durationMin:
+          type: integer
+          example: 12
+        agent:
+          type: string
+          example: Rahul Sharma
+        sentiment:
+          type: string
+          enum: [Positive, Neutral, Negative]
+        summary:
+          type: string
+        issues:
+          type: array
+          items:
+            type: string
+        quote:
+          type: string
+        disposition:
+          type: string
+          enum: [Willing, Skeptical, Hostile]
+        competitorMentioned:
+          type: string
+          example: IndiaTrade
+        commitmentByExec:
+          type: string
+        source:
+          type: string
+          enum: [AUDIO, MERP, MANUAL]
+
+    Seller:
+      type: object
+      properties:
+        id:
+          type: string
+          example: S-20001
+        name:
+          type: string
+          example: Arjun Verma
+        company:
+          type: string
+          example: Verma Construction Supplies
+        city:
+          type: string
+          example: Delhi
+        category:
+          type: string
+          example: Construction Materials
+        packageType:
+          type: string
+          enum: [Catalog, Silver, Gold, Platinum, Star]
+        arr:
+          type: integer
+          description: Annual Recurring Revenue in INR
+          example: 35000
+        status:
+          type: string
+          enum: [Pending, Resolved, Escalated, Churned]
+        priorChurn:
+          type: boolean
+        renewalDate:
+          type: string
+          format: date
+          example: "2026-06-22"
+        daysToRenewal:
+          type: integer
+          example: 38
+        riskScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 87
+        churnCause:
+          type: string
+          enum: [BEHAVIORAL, PLATFORM_FAILURE, EXTERNAL, MIXED]
+        churnCauseReason:
+          type: string
+        archetype:
+          type: string
+          enum: [Overwhelmed Starter, ROI Doubter, Platform Victim, Competitor Target, Seasonal Dip, Healthy]
+        mlChurnProb:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.9943
+        mlTopFeatures:
+          type: array
+          items:
+            type: string
+        metrics:
+          $ref: '#/components/schemas/SellerMetrics'
+        callInsights:
+          type: array
+          items:
+            $ref: '#/components/schemas/CallInsight'
+
+    OutcomeRequest:
+      type: object
+      required: [outcome]
+      properties:
+        outcome:
+          type: string
+          enum: [Resolved, Escalated, Churned]
+        notes:
+          type: string
+        disposition:
+          type: string
+          enum: [Willing, Skeptical, Hostile]
+        churnReasons:
+          type: array
+          items:
+            type: string
+            enum:
+              - LEAD_QUALITY
+              - PRICING
+              - COMPETITOR_SWITCH
+              - ROI_NOT_VISIBLE
+              - PLATFORM_ISSUE
+              - LOW_ENGAGEMENT
+              - BUSINESS_CLOSURE
+              - SUPPORT_QUALITY
+              - CATALOG_ISSUE
+        competitorMentioned:
+          type: string
+        execCommitment:
+          type: string
+        followUpDate:
+          type: string
+          format: date
+        customReason:
+          type: string
+
+    OutcomeResponse:
+      type: object
+      properties:
+        record:
+          type: object
+          properties:
+            id:
+              type: integer
+            sellerId:
+              type: string
+            outcome:
+              type: string
+            notes:
+              type: string
+            disposition:
+              type: string
+            churnReasons:
+              type: array
+              items:
+                type: string
+            competitorMentioned:
+              type: string
+            execCommitment:
+              type: string
+            followUpDate:
+              type: string
+            customReason:
+              type: string
+            riskScoreAtTime:
+              type: integer
+            loggedAt:
+              type: string
+        totalOutcomes:
+          type: integer
+          example: 501
+        nextRetrainAt:
+          type: integer
+          example: 5000
+        message:
+          type: string
+          example: Outcome logged. 501 training examples collected.
+
+    GuideSection:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Opening & Understanding Your Needs
+        pitch:
+          type: string
+        actions:
+          type: array
+          items:
+            type: string
+
+    GuideResponse:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuideSection'
+        cached:
+          type: boolean
+
+    AudioUploadRequest:
+      type: object
+      required: [sellerId, transcript]
+      properties:
+        sellerId:
+          type: string
+          example: S-20001
+        agent:
+          type: string
+          example: Rahul Sharma
+        durationMin:
+          type: integer
+          example: 12
+        transcript:
+          type: string
+          description: Full call transcript text
+
+    PatternAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [PLATFORM, SEASONAL, LEAD_FIT, PRIOR_CHURN]
+        severity:
+          type: string
+          enum: [High, Medium]
+        title:
+          type: string
+        narrative:
+          type: string
+        affectedIds:
+          type: array
+          items:
+            type: string
+        affectedCount:
+          type: integer
+
+    StatsResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 20
+        high:
+          type: integer
+          example: 12
+        medium:
+          type: integer
+          example: 3
+        low:
+          type: integer
+          example: 5
+        arrAtRisk:
+          type: integer
+          example: 1232000
+        cohortDate:
+          type: string
+          format: date
+          example: "2026-06-22"
+
+    MLPrediction:
+      type: object
+      properties:
+        sellerId:
+          type: string
+        churnProb:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.9943
+        topFeatures:
+          type: array
+          items:
+            type: string
+          example: [pnsPct_last, blPct_last, loginPct_last]
+        modelVersion:
+          type: string
+          example: xgb-v1
+
+    MLStats:
+      type: object
+      properties:
+        trainingExamples:
+          type: integer
+          example: 500
+        auc:
+          type: number
+          example: 0.81
+        previousAuc:
+          type: number
+          example: 0.79
+        swapped:
+          type: boolean
+        topFeatures:
+          type: array
+          items:
+            type: string
+        featureImportances:
+          type: object
+          additionalProperties:
+            type: number
+        nextRetrainAt:
+          type: integer
+          example: 5000
+        lastTrainedAt:
+          type: string
+          format: date-time
+        modelActive:
+          type: boolean
+
+  responses:
+    NotFound:
+      description: Seller not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: seller not found
+
+    BadRequest:
+      description: Invalid request body
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
