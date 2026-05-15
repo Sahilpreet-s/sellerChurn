@@ -253,7 +253,7 @@ function RootComponent() {
 
         <div className="flex flex-1 overflow-hidden">
           <AppSidebar />
-          <main className="flex-1 overflow-y-scroll bg-gradient-to-b from-muted/20 to-muted/40 [scrollbar-gutter:stable]">
+          <main className="flex-1 overflow-y-auto bg-gradient-to-b from-muted/20 to-muted/40 [scrollbar-gutter:stable]">
             <Outlet />
           </main>
         </div>
