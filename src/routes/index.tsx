@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { sellers, riskBand, statusMeta, type Seller, type SellerStatus } from "@/lib/mock-sellers";
+import { sellers as mockSellers, riskBand, statusMeta, churnCauseMeta, type Seller, type SellerStatus, type ChurnCause } from "@/lib/mock-sellers";
+import { fetchSellers, fetchStats, fetchPatterns, type PatternAlert, type DashboardStats } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle, TrendingDown, Users, IndianRupee, Search, ChevronRight } from "lucide-react";
+
+// ─── Loader ───────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,8 +18,31 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Identify at-risk sellers up for renewal in the next 90 days." },
     ],
   }),
+  loader: async () => {
+    try {
+      const [sellers, stats, patterns] = await Promise.all([
+        fetchSellers(),
+        fetchStats(),
+        fetchPatterns(),
+      ]);
+      return { sellers, stats, patterns, fromAPI: true };
+    } catch {
+      // Fallback to mock data when API is not running
+      const high = mockSellers.filter(s => riskBand(s.riskScore) === "High");
+      const med = mockSellers.filter(s => riskBand(s.riskScore) === "Medium");
+      const arrAtRisk = high.reduce((sum, s) => sum + s.arr, 0);
+      const stats: DashboardStats = {
+        total: mockSellers.length, high: high.length, medium: med.length,
+        low: mockSellers.filter(s => riskBand(s.riskScore) === "Low").length,
+        arrAtRisk, cohortDate: "2026-08-13",
+      };
+      return { sellers: mockSellers, stats, patterns: [] as PatternAlert[], fromAPI: false };
+    }
+  },
   component: Dashboard,
 });
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function formatRenewal(iso: string) {
@@ -29,6 +55,8 @@ function riskColor(band: "High" | "Medium" | "Low") {
   if (band === "Medium") return "bg-warning/15 text-warning border-warning/30";
   return "bg-success/15 text-success border-success/30";
 }
+
+// ─── Components ───────────────────────────────────────────────────────────────
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: typeof Users; label: string; value: string; sub?: string }) {
   return (
@@ -49,11 +77,54 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: typeof Users; label
   );
 }
 
+function ChurnCauseBadge({ cause }: { cause: ChurnCause }) {
+  const meta = churnCauseMeta[cause];
+  return (
+    <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${meta.className}`} title={meta.description}>
+      {meta.label}
+    </span>
+  );
+}
+
+function PatternAlertsBanner({ patterns }: { patterns: PatternAlert[] }) {
+  if (patterns.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      {patterns.map((p) => (
+        <div
+          key={p.id}
+          className={`rounded-md border px-4 py-3 flex items-start gap-3 text-sm ${
+            p.severity === "High"
+              ? "border-destructive/40 bg-destructive/5"
+              : "border-warning/40 bg-warning/5"
+          }`}
+        >
+          <AlertTriangle className={`h-4 w-4 mt-0.5 shrink-0 ${p.severity === "High" ? "text-destructive" : "text-warning"}`} />
+          <div>
+            <span className="font-semibold">{p.title}:</span>{" "}
+            <span className="text-muted-foreground">{p.narrative}</span>
+            {p.affectedIds.length > 0 && (
+              <span className="ml-2 text-xs text-muted-foreground">
+                Affected: {p.affectedIds.slice(0, 5).join(", ")}{p.affectedIds.length > 5 ? ` +${p.affectedIds.length - 5}` : ""}
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
 function Dashboard() {
+  const { sellers, stats, patterns, fromAPI } = Route.useLoaderData();
+
   const [query, setQuery] = useState("");
   const [riskFilter, setRiskFilter] = useState<string>("all");
   const [pkgFilter, setPkgFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [causeFilter, setCauseFilter] = useState<string>("all");
 
   const filtered = useMemo(() => {
     return sellers.filter((s) => {
@@ -62,16 +133,10 @@ function Dashboard() {
       const matchR = riskFilter === "all" || riskBand(s.riskScore) === riskFilter;
       const matchP = pkgFilter === "all" || s.packageType === pkgFilter;
       const matchS = statusFilter === "all" || s.status === statusFilter;
-      return matchQ && matchR && matchP && matchS;
+      const matchC = causeFilter === "all" || s.churnCause === causeFilter;
+      return matchQ && matchR && matchP && matchS && matchC;
     });
-  }, [query, riskFilter, pkgFilter, statusFilter]);
-
-  const stats = useMemo(() => {
-    const high = sellers.filter((s) => riskBand(s.riskScore) === "High");
-    const med = sellers.filter((s) => riskBand(s.riskScore) === "Medium");
-    const arrAtRisk = high.reduce((sum, s) => sum + s.arr, 0);
-    return { total: sellers.length, high: high.length, med: med.length, arrAtRisk };
-  }, []);
+  }, [sellers, query, riskFilter, pkgFilter, statusFilter, causeFilter]);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -83,36 +148,44 @@ function Dashboard() {
               <h1 className="mt-1 text-2xl font-semibold tracking-tight">Seller Churn Early Warning</h1>
             </div>
             <div className="text-right">
-              <p className="text-xs text-muted-foreground">Cohort</p>
-              <p className="text-sm font-medium">Renewal due in exactly 90 days</p>
+              <div className="flex items-center gap-2 justify-end">
+                <div className={`h-2 w-2 rounded-full ${fromAPI ? "bg-success" : "bg-muted-foreground"}`} />
+                <p className="text-xs text-muted-foreground">{fromAPI ? "Live API" : "Mock data"}</p>
+              </div>
+              <p className="text-sm font-medium mt-0.5">Renewal due in exactly 90 days</p>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-6 py-8 space-y-6">
+        {/* Pattern Alerts */}
+        <PatternAlertsBanner patterns={patterns} />
+
+        {/* Stat cards */}
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard icon={Users} label="Sellers in cohort" value={String(stats.total)} sub="Renewal in exactly 90 days" />
-          <StatCard icon={AlertTriangle} label="High risk" value={String(stats.high)} sub={`${Math.round((stats.high / stats.total) * 100)}% of cohort`} />
-          <StatCard icon={TrendingDown} label="Medium risk" value={String(stats.med)} sub="Watch closely" />
-          <StatCard icon={IndianRupee} label="ARR at risk" value={`₹${(stats.arrAtRisk / 100000).toFixed(1)}L`} sub="From high-risk sellers" />
+          <StatCard icon={Users}         label="Sellers in cohort" value={String(stats.total)}        sub="Renewal in exactly 90 days" />
+          <StatCard icon={AlertTriangle} label="High risk"          value={String(stats.high)}         sub={`${Math.round((stats.high / stats.total) * 100)}% of cohort`} />
+          <StatCard icon={TrendingDown}  label="Medium risk"        value={String(stats.medium)}       sub="Watch closely" />
+          <StatCard icon={IndianRupee}   label="ARR at risk"        value={`₹${(stats.arrAtRisk / 100000).toFixed(1)}L`} sub="From high-risk sellers" />
         </div>
 
-        <Card className="mt-8">
+        {/* Seller table */}
+        <Card>
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-base">At-risk sellers</CardTitle>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-wrap gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search seller / company / ID"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full pl-9 sm:w-64"
+                  className="w-full pl-9 sm:w-56"
                 />
               </div>
               <Select value={riskFilter} onValueChange={setRiskFilter}>
-                <SelectTrigger className="sm:w-36"><SelectValue placeholder="Risk" /></SelectTrigger>
+                <SelectTrigger className="sm:w-32"><SelectValue placeholder="Risk" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All risk</SelectItem>
                   <SelectItem value="High">High</SelectItem>
@@ -120,8 +193,18 @@ function Dashboard() {
                   <SelectItem value="Low">Low</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={causeFilter} onValueChange={setCauseFilter}>
+                <SelectTrigger className="sm:w-36"><SelectValue placeholder="Cause" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All causes</SelectItem>
+                  <SelectItem value="BEHAVIORAL">Behavioural</SelectItem>
+                  <SelectItem value="PLATFORM_FAILURE">Platform</SelectItem>
+                  <SelectItem value="EXTERNAL">External</SelectItem>
+                  <SelectItem value="MIXED">Mixed</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="sm:w-36"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger className="sm:w-32"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All status</SelectItem>
                   {(Object.keys(statusMeta) as SellerStatus[]).map((k) => (
@@ -130,13 +213,14 @@ function Dashboard() {
                 </SelectContent>
               </Select>
               <Select value={pkgFilter} onValueChange={setPkgFilter}>
-                <SelectTrigger className="sm:w-36"><SelectValue placeholder="Package" /></SelectTrigger>
+                <SelectTrigger className="sm:w-32"><SelectValue placeholder="Package" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All packages</SelectItem>
                   <SelectItem value="Star">Star</SelectItem>
                   <SelectItem value="Platinum">Platinum</SelectItem>
                   <SelectItem value="Gold">Gold</SelectItem>
                   <SelectItem value="Silver">Silver</SelectItem>
+                  <SelectItem value="Catalog">Catalog</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -152,16 +236,15 @@ function Dashboard() {
                     <TableHead>Renewal</TableHead>
                     <TableHead className="text-right">ARR</TableHead>
                     <TableHead>Risk</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Cause</TableHead>
+                    <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((s) => (
-                    <SellerRow key={s.id} seller={s} />
-                  ))}
+                  {filtered.map((s) => <SellerRow key={s.id} seller={s} />)}
                   {filtered.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
+                      <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
                         No sellers match these filters.
                       </TableCell>
                     </TableRow>
@@ -182,8 +265,11 @@ function SellerRow({ seller: s }: { seller: Seller }) {
     <TableRow className="group">
       <TableCell>
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
             {s.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+            {s.priorChurn && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive border-2 border-background" title="Prior churn" />
+            )}
           </div>
           <div>
             <p className="font-medium">{s.name}</p>
@@ -206,6 +292,9 @@ function SellerRow({ seller: s }: { seller: Seller }) {
         <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${riskColor(band)}`}>
           {band} · {s.riskScore}
         </span>
+      </TableCell>
+      <TableCell>
+        <ChurnCauseBadge cause={s.churnCause} />
       </TableCell>
       <TableCell>
         <Link

@@ -1,0 +1,2624 @@
+[
+  {
+    "id": "S-20001",
+    "name": "Arjun Verma",
+    "company": "Verma Construction Supplies",
+    "city": "Delhi",
+    "category": "Construction Materials",
+    "packageType": "Catalog",
+    "arr": 35000,
+    "status": "Pending",
+    "priorChurn": true,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 38
+        },
+        {
+          "month": "Apr",
+          "value": 28
+        },
+        {
+          "month": "May",
+          "value": 23
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 28
+        },
+        {
+          "month": "Apr",
+          "value": 18
+        },
+        {
+          "month": "May",
+          "value": 12
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 42
+        },
+        {
+          "month": "Apr",
+          "value": 29
+        },
+        {
+          "month": "May",
+          "value": 21
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 28
+        },
+        {
+          "month": "Apr",
+          "value": 24
+        },
+        {
+          "month": "May",
+          "value": 12
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 40
+        },
+        {
+          "month": "Apr",
+          "value": 38
+        },
+        {
+          "month": "May",
+          "value": 44
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 33
+        },
+        {
+          "month": "Apr",
+          "value": 33
+        },
+        {
+          "month": "May",
+          "value": 35
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 32
+        },
+        {
+          "month": "Apr",
+          "value": 31
+        },
+        {
+          "month": "May",
+          "value": 30
+        }
+      ]
+    },
+    "callInsights": []
+  },
+  {
+    "id": "S-20002",
+    "name": "Deepa Krishnan",
+    "company": "Krishna Beverages Pvt Ltd",
+    "city": "Bengaluru",
+    "category": "Packaged Drinking Water",
+    "packageType": "Catalog",
+    "arr": 35000,
+    "status": "Pending",
+    "priorChurn": true,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 41
+        },
+        {
+          "month": "Apr",
+          "value": 32
+        },
+        {
+          "month": "May",
+          "value": 23
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 34
+        },
+        {
+          "month": "Apr",
+          "value": 24
+        },
+        {
+          "month": "May",
+          "value": 12
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 55
+        },
+        {
+          "month": "Apr",
+          "value": 40
+        },
+        {
+          "month": "May",
+          "value": 25
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 37
+        },
+        {
+          "month": "Apr",
+          "value": 26
+        },
+        {
+          "month": "May",
+          "value": 14
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 31
+        },
+        {
+          "month": "Apr",
+          "value": 31
+        },
+        {
+          "month": "May",
+          "value": 31
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 40
+        },
+        {
+          "month": "Apr",
+          "value": 44
+        },
+        {
+          "month": "May",
+          "value": 47
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 33
+        },
+        {
+          "month": "Apr",
+          "value": 41
+        },
+        {
+          "month": "May",
+          "value": 44
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-20002",
+        "date": "2026-05-08",
+        "durationMin": 9,
+        "agent": "Anita R.",
+        "sentiment": "Negative",
+        "summary": "Seller frustrated — not getting any buyer enquiries despite 2 months on platform.",
+        "issues": [
+          "No buyer enquiries",
+          "Catalog visibility concern",
+          "ROI disappointment"
+        ],
+        "quote": "I paid for Catalog but haven't got a single order. What am I paying for?",
+        "disposition": "Hostile",
+        "competitorMentioned": "",
+        "commitmentByExec": "Will escalate catalog indexing to Product team",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-20003",
+    "name": "Suresh Yadav",
+    "company": "Yadav Poly Solutions",
+    "city": "Nagpur",
+    "category": "Plastic Raw Material",
+    "packageType": "Silver",
+    "arr": 55000,
+    "status": "Pending",
+    "priorChurn": true,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 56
+        },
+        {
+          "month": "Apr",
+          "value": 49
+        },
+        {
+          "month": "May",
+          "value": 39
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 47
+        },
+        {
+          "month": "Apr",
+          "value": 36
+        },
+        {
+          "month": "May",
+          "value": 26
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 56
+        },
+        {
+          "month": "Apr",
+          "value": 46
+        },
+        {
+          "month": "May",
+          "value": 37
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 50
+        },
+        {
+          "month": "Apr",
+          "value": 42
+        },
+        {
+          "month": "May",
+          "value": 32
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 58
+        },
+        {
+          "month": "Apr",
+          "value": 61
+        },
+        {
+          "month": "May",
+          "value": 61
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 47
+        },
+        {
+          "month": "Apr",
+          "value": 48
+        },
+        {
+          "month": "May",
+          "value": 50
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 44
+        },
+        {
+          "month": "Apr",
+          "value": 48
+        },
+        {
+          "month": "May",
+          "value": 47
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-20003",
+        "date": "2026-05-10",
+        "durationMin": 16,
+        "agent": "Rahul S.",
+        "sentiment": "Negative",
+        "summary": "Platform sending retail buyers to a raw-material wholesaler. BL filters not working as configured.",
+        "issues": [
+          "BL filters not working",
+          "Lead quality dropped",
+          "Catalog edits rejected"
+        ],
+        "quote": "I sell in tonnes to factories. Why am I getting calls from small shops?",
+        "disposition": "Skeptical",
+        "competitorMentioned": "",
+        "commitmentByExec": "Raised BL filter ticket with product team",
+        "source": "MERP"
+      },
+      {
+        "id": "C2",
+        "sellerId": "S-20003",
+        "date": "2026-04-15",
+        "durationMin": 8,
+        "agent": "Rahul S.",
+        "sentiment": "Negative",
+        "summary": "Follow-up on BL filter issue — not yet resolved. Seller growing impatient.",
+        "issues": [
+          "BL filters not working"
+        ],
+        "quote": "",
+        "disposition": "Hostile",
+        "competitorMentioned": "",
+        "commitmentByExec": "",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-20004",
+    "name": "Rajesh Kumar",
+    "company": "Kumar Papers & Stationery",
+    "city": "Kolkata",
+    "category": "Paper & Stationery",
+    "packageType": "Catalog",
+    "arr": 35000,
+    "status": "Pending",
+    "priorChurn": true,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 49
+        },
+        {
+          "month": "Apr",
+          "value": 37
+        },
+        {
+          "month": "May",
+          "value": 26
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 36
+        },
+        {
+          "month": "Apr",
+          "value": 23
+        },
+        {
+          "month": "May",
+          "value": 14
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 47
+        },
+        {
+          "month": "Apr",
+          "value": 36
+        },
+        {
+          "month": "May",
+          "value": 26
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 40
+        },
+        {
+          "month": "Apr",
+          "value": 29
+        },
+        {
+          "month": "May",
+          "value": 24
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 35
+        },
+        {
+          "month": "Apr",
+          "value": 34
+        },
+        {
+          "month": "May",
+          "value": 38
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 35
+        },
+        {
+          "month": "Apr",
+          "value": 40
+        },
+        {
+          "month": "May",
+          "value": 39
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 32
+        },
+        {
+          "month": "Apr",
+          "value": 33
+        },
+        {
+          "month": "May",
+          "value": 36
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-20004",
+        "date": "2026-05-03",
+        "durationMin": 14,
+        "agent": "Priya D.",
+        "sentiment": "Negative",
+        "summary": "Seller evaluating IndiaTrade offer. Feels IndiaMART not delivering ROI at current price.",
+        "issues": [
+          "Competitor offer received",
+          "Pricing vs ROI",
+          "Low enquiry volume"
+        ],
+        "quote": "IndiaTrade is giving me a 3-month trial free. Why would I renew here?",
+        "disposition": "Hostile",
+        "competitorMentioned": "IndiaTrade",
+        "commitmentByExec": "Will discuss package options and loyalty discount",
+        "source": "AUDIO"
+      }
+    ]
+  },
+  {
+    "id": "S-10293",
+    "name": "Rakesh Sharma",
+    "company": "Sharma Industries",
+    "city": "Delhi",
+    "category": "Industrial Supplies",
+    "packageType": "Platinum",
+    "arr": 185000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 77
+        },
+        {
+          "month": "Apr",
+          "value": 63
+        },
+        {
+          "month": "May",
+          "value": 51
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 84
+        },
+        {
+          "month": "Apr",
+          "value": 64
+        },
+        {
+          "month": "May",
+          "value": 45
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 74
+        },
+        {
+          "month": "Apr",
+          "value": 62
+        },
+        {
+          "month": "May",
+          "value": 45
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 66
+        },
+        {
+          "month": "Apr",
+          "value": 44
+        },
+        {
+          "month": "May",
+          "value": 29
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 38
+        },
+        {
+          "month": "Apr",
+          "value": 45
+        },
+        {
+          "month": "May",
+          "value": 45
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 73
+        },
+        {
+          "month": "Apr",
+          "value": 62
+        },
+        {
+          "month": "May",
+          "value": 52
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 67
+        },
+        {
+          "month": "Apr",
+          "value": 58
+        },
+        {
+          "month": "May",
+          "value": 52
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-10293",
+        "date": "2026-04-28",
+        "durationMin": 14,
+        "agent": "Anita R.",
+        "sentiment": "Negative",
+        "summary": "Seller frustrated with poor lead quality and unanswered support tickets.",
+        "issues": [
+          "Lead quality dropped",
+          "Support response slow",
+          "Considering competitor"
+        ],
+        "quote": "I'm paying Platinum money but most leads are retail buyers wasting my time.",
+        "disposition": "Skeptical",
+        "competitorMentioned": "",
+        "commitmentByExec": "Will review BL filter config and prioritise support ticket",
+        "source": "MERP"
+      },
+      {
+        "id": "C2",
+        "sellerId": "S-10293",
+        "date": "2026-03-15",
+        "durationMin": 9,
+        "agent": "Vikas K.",
+        "sentiment": "Neutral",
+        "summary": "Discussed BL filter tuning. Seller agreed to try but skeptical.",
+        "issues": [
+          "BL filters not working"
+        ],
+        "quote": "",
+        "disposition": "Skeptical",
+        "competitorMentioned": "",
+        "commitmentByExec": "",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-10847",
+    "name": "Priya Mehta",
+    "company": "Mehta Textiles",
+    "city": "Surat",
+    "category": "Textiles & Fabrics",
+    "packageType": "Gold",
+    "arr": 95000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 46
+        },
+        {
+          "month": "Apr",
+          "value": 33
+        },
+        {
+          "month": "May",
+          "value": 24
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 51
+        },
+        {
+          "month": "Apr",
+          "value": 33
+        },
+        {
+          "month": "May",
+          "value": 23
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 40
+        },
+        {
+          "month": "Apr",
+          "value": 32
+        },
+        {
+          "month": "May",
+          "value": 21
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 33
+        },
+        {
+          "month": "Apr",
+          "value": 25
+        },
+        {
+          "month": "May",
+          "value": 15
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 58
+        },
+        {
+          "month": "Apr",
+          "value": 66
+        },
+        {
+          "month": "May",
+          "value": 70
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 58
+        },
+        {
+          "month": "Apr",
+          "value": 50
+        },
+        {
+          "month": "May",
+          "value": 45
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 53
+        },
+        {
+          "month": "Apr",
+          "value": 49
+        },
+        {
+          "month": "May",
+          "value": 41
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-10847",
+        "date": "2026-04-22",
+        "durationMin": 11,
+        "agent": "Anita R.",
+        "sentiment": "Negative",
+        "summary": "Seller says enquiries dropped sharply. Blames algorithm changes for poor BL relevance.",
+        "issues": [
+          "Drop in enquiries",
+          "Catalog visibility concern"
+        ],
+        "quote": "Last 2 months I'm getting half the calls I used to get.",
+        "disposition": "Skeptical",
+        "competitorMentioned": "",
+        "commitmentByExec": "Scheduled catalog audit for next week",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-12889",
+    "name": "Vikram Singh",
+    "company": "Singh Electricals",
+    "city": "Ludhiana",
+    "category": "Electrical Equipment",
+    "packageType": "Gold",
+    "arr": 110000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 34
+        },
+        {
+          "month": "Apr",
+          "value": 24
+        },
+        {
+          "month": "May",
+          "value": 10
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 40
+        },
+        {
+          "month": "Apr",
+          "value": 20
+        },
+        {
+          "month": "May",
+          "value": 6
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 28
+        },
+        {
+          "month": "Apr",
+          "value": 19
+        },
+        {
+          "month": "May",
+          "value": 9
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 26
+        },
+        {
+          "month": "Apr",
+          "value": 16
+        },
+        {
+          "month": "May",
+          "value": 7
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 69
+        },
+        {
+          "month": "Apr",
+          "value": 74
+        },
+        {
+          "month": "May",
+          "value": 83
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 46
+        },
+        {
+          "month": "Apr",
+          "value": 36
+        },
+        {
+          "month": "May",
+          "value": 24
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 44
+        },
+        {
+          "month": "Apr",
+          "value": 29
+        },
+        {
+          "month": "May",
+          "value": 24
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-12889",
+        "date": "2026-05-02",
+        "durationMin": 22,
+        "agent": "Priya D.",
+        "sentiment": "Negative",
+        "summary": "Seller threatening to switch to TradeIndia. Multiple complaints unresolved.",
+        "issues": [
+          "Competitor offer received",
+          "Buyer disputes unhandled",
+          "Catalog edits rejected"
+        ],
+        "quote": "TradeIndia is offering me same package at 30% less. Why should I stay?",
+        "disposition": "Hostile",
+        "competitorMentioned": "TradeIndia",
+        "commitmentByExec": "Escalated to Sales Manager. Pricing review in progress.",
+        "source": "AUDIO"
+      },
+      {
+        "id": "C2",
+        "sellerId": "S-12889",
+        "date": "2026-04-10",
+        "durationMin": 7,
+        "agent": "Priya D.",
+        "sentiment": "Negative",
+        "summary": "Seller upset about PNS missed calls — wants better call routing.",
+        "issues": [
+          "PNS routing"
+        ],
+        "quote": "",
+        "disposition": "Skeptical",
+        "competitorMentioned": "",
+        "commitmentByExec": "",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-14021",
+    "name": "Mohammed Khan",
+    "company": "Khan Hardware Co",
+    "city": "Mumbai",
+    "category": "Hardware",
+    "packageType": "Gold",
+    "arr": 125000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 54
+        },
+        {
+          "month": "Apr",
+          "value": 46
+        },
+        {
+          "month": "May",
+          "value": 36
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 61
+        },
+        {
+          "month": "Apr",
+          "value": 48
+        },
+        {
+          "month": "May",
+          "value": 38
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 45
+        },
+        {
+          "month": "Apr",
+          "value": 39
+        },
+        {
+          "month": "May",
+          "value": 34
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 38
+        },
+        {
+          "month": "Apr",
+          "value": 31
+        },
+        {
+          "month": "May",
+          "value": 20
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 54
+        },
+        {
+          "month": "Apr",
+          "value": 60
+        },
+        {
+          "month": "May",
+          "value": 61
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 55
+        },
+        {
+          "month": "Apr",
+          "value": 50
+        },
+        {
+          "month": "May",
+          "value": 48
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 55
+        },
+        {
+          "month": "Apr",
+          "value": 46
+        },
+        {
+          "month": "May",
+          "value": 41
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-14021",
+        "date": "2026-04-18",
+        "durationMin": 12,
+        "agent": "Vikas K.",
+        "sentiment": "Neutral",
+        "summary": "Seller wants help refreshing catalog images. Open to retention if platform helps.",
+        "issues": [
+          "Needs catalog support"
+        ],
+        "quote": "",
+        "disposition": "Willing",
+        "competitorMentioned": "",
+        "commitmentByExec": "Arranged free catalog photo session",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-15203",
+    "name": "Rohit Iyer",
+    "company": "Iyer Auto Parts",
+    "city": "Chennai",
+    "category": "Automotive",
+    "packageType": "Gold",
+    "arr": 105000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 42
+        },
+        {
+          "month": "Apr",
+          "value": 28
+        },
+        {
+          "month": "May",
+          "value": 13
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 46
+        },
+        {
+          "month": "Apr",
+          "value": 30
+        },
+        {
+          "month": "May",
+          "value": 14
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 35
+        },
+        {
+          "month": "Apr",
+          "value": 29
+        },
+        {
+          "month": "May",
+          "value": 19
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 32
+        },
+        {
+          "month": "Apr",
+          "value": 24
+        },
+        {
+          "month": "May",
+          "value": 16
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 64
+        },
+        {
+          "month": "Apr",
+          "value": 67
+        },
+        {
+          "month": "May",
+          "value": 73
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 49
+        },
+        {
+          "month": "Apr",
+          "value": 40
+        },
+        {
+          "month": "May",
+          "value": 36
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 49
+        },
+        {
+          "month": "Apr",
+          "value": 42
+        },
+        {
+          "month": "May",
+          "value": 31
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-15203",
+        "date": "2026-04-25",
+        "durationMin": 16,
+        "agent": "Anita R.",
+        "sentiment": "Negative",
+        "summary": "Frustrated with LMS UI — team cannot keep up with replies. Losing leads daily.",
+        "issues": [
+          "LMS hard to use",
+          "Team training gap",
+          "Lead reply delays"
+        ],
+        "quote": "My staff doesn't understand the new LMS. We're losing leads daily.",
+        "disposition": "Skeptical",
+        "competitorMentioned": "",
+        "commitmentByExec": "Scheduled LMS training session for seller's team",
+        "source": "AUDIO"
+      }
+    ]
+  },
+  {
+    "id": "S-12104",
+    "name": "Sunita Reddy",
+    "company": "Reddy Chemicals",
+    "city": "Hyderabad",
+    "category": "Chemicals",
+    "packageType": "Platinum",
+    "arr": 215000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 61
+        },
+        {
+          "month": "Apr",
+          "value": 53
+        },
+        {
+          "month": "May",
+          "value": 45
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 68
+        },
+        {
+          "month": "Apr",
+          "value": 57
+        },
+        {
+          "month": "May",
+          "value": 50
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 54
+        },
+        {
+          "month": "Apr",
+          "value": 48
+        },
+        {
+          "month": "May",
+          "value": 45
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 51
+        },
+        {
+          "month": "Apr",
+          "value": 44
+        },
+        {
+          "month": "May",
+          "value": 35
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 43
+        },
+        {
+          "month": "Apr",
+          "value": 44
+        },
+        {
+          "month": "May",
+          "value": 51
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 65
+        },
+        {
+          "month": "Apr",
+          "value": 62
+        },
+        {
+          "month": "May",
+          "value": 56
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 61
+        },
+        {
+          "month": "Apr",
+          "value": 57
+        },
+        {
+          "month": "May",
+          "value": 54
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-12104",
+        "date": "2026-04-30",
+        "durationMin": 18,
+        "agent": "Rahul S.",
+        "sentiment": "Negative",
+        "summary": "Pricing complaint — renewal cost up 20% but orders haven't grown proportionally.",
+        "issues": [
+          "Pricing vs ROI",
+          "Wants discount on renewal"
+        ],
+        "quote": "Renewal cost has gone up 20% but my orders haven't.",
+        "disposition": "Skeptical",
+        "competitorMentioned": "",
+        "commitmentByExec": "Requested loyalty discount approval from management",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-20005",
+    "name": "Deepak Malhotra",
+    "company": "Malhotra Scaffold Works",
+    "city": "Chandigarh",
+    "category": "Scaffolding & Formwork",
+    "packageType": "Gold",
+    "arr": 98000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 74
+        },
+        {
+          "month": "Apr",
+          "value": 67
+        },
+        {
+          "month": "May",
+          "value": 61
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 64
+        },
+        {
+          "month": "Apr",
+          "value": 57
+        },
+        {
+          "month": "May",
+          "value": 47
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 66
+        },
+        {
+          "month": "Apr",
+          "value": 62
+        },
+        {
+          "month": "May",
+          "value": 55
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 65
+        },
+        {
+          "month": "Apr",
+          "value": 58
+        },
+        {
+          "month": "May",
+          "value": 50
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 30
+        },
+        {
+          "month": "Apr",
+          "value": 29
+        },
+        {
+          "month": "May",
+          "value": 28
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 73
+        },
+        {
+          "month": "Apr",
+          "value": 70
+        },
+        {
+          "month": "May",
+          "value": 65
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 67
+        },
+        {
+          "month": "Apr",
+          "value": 67
+        },
+        {
+          "month": "May",
+          "value": 65
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-20005",
+        "date": "2026-05-06",
+        "durationMin": 10,
+        "agent": "Vikas K.",
+        "sentiment": "Neutral",
+        "summary": "Seller acknowledges seasonal slowdown in construction activity Mar–May. Expects recovery in June.",
+        "issues": [
+          "Seasonal low order volume"
+        ],
+        "quote": "",
+        "disposition": "Willing",
+        "competitorMentioned": "",
+        "commitmentByExec": "Deferred renewal discussion to June when season picks up",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-20006",
+    "name": "Meera Shah",
+    "company": "Shah Food Machines",
+    "city": "Vadodara",
+    "category": "Food Processing Equipment",
+    "packageType": "Silver",
+    "arr": 62000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 68
+        },
+        {
+          "month": "Apr",
+          "value": 57
+        },
+        {
+          "month": "May",
+          "value": 49
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 58
+        },
+        {
+          "month": "Apr",
+          "value": 44
+        },
+        {
+          "month": "May",
+          "value": 40
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 61
+        },
+        {
+          "month": "Apr",
+          "value": 54
+        },
+        {
+          "month": "May",
+          "value": 46
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 60
+        },
+        {
+          "month": "Apr",
+          "value": 49
+        },
+        {
+          "month": "May",
+          "value": 43
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 42
+        },
+        {
+          "month": "Apr",
+          "value": 44
+        },
+        {
+          "month": "May",
+          "value": 45
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 62
+        },
+        {
+          "month": "Apr",
+          "value": 60
+        },
+        {
+          "month": "May",
+          "value": 61
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 63
+        },
+        {
+          "month": "Apr",
+          "value": 57
+        },
+        {
+          "month": "May",
+          "value": 56
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-20006",
+        "date": "2026-04-20",
+        "durationMin": 11,
+        "agent": "Anita R.",
+        "sentiment": "Neutral",
+        "summary": "Seller not seeing enough B2B food-factory buyers. ROI concerns but willing to continue if improved.",
+        "issues": [
+          "Buyer quality concern",
+          "ROI disappointment"
+        ],
+        "quote": "",
+        "disposition": "Willing",
+        "competitorMentioned": "",
+        "commitmentByExec": "Will recalibrate BL category filters to exclude retail food buyers",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-20007",
+    "name": "Sanjay Tiwari",
+    "company": "Tiwari Pharma Ingredients",
+    "city": "Indore",
+    "category": "Pharma Raw Materials",
+    "packageType": "Platinum",
+    "arr": 175000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 70
+        },
+        {
+          "month": "Apr",
+          "value": 65
+        },
+        {
+          "month": "May",
+          "value": 56
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 63
+        },
+        {
+          "month": "Apr",
+          "value": 52
+        },
+        {
+          "month": "May",
+          "value": 48
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 67
+        },
+        {
+          "month": "Apr",
+          "value": 59
+        },
+        {
+          "month": "May",
+          "value": 52
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 66
+        },
+        {
+          "month": "Apr",
+          "value": 59
+        },
+        {
+          "month": "May",
+          "value": 50
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 58
+        },
+        {
+          "month": "Apr",
+          "value": 60
+        },
+        {
+          "month": "May",
+          "value": 58
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 63
+        },
+        {
+          "month": "Apr",
+          "value": 59
+        },
+        {
+          "month": "May",
+          "value": 57
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 65
+        },
+        {
+          "month": "Apr",
+          "value": 62
+        },
+        {
+          "month": "May",
+          "value": 58
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-20007",
+        "date": "2026-05-01",
+        "durationMin": 13,
+        "agent": "Rahul S.",
+        "sentiment": "Negative",
+        "summary": "Getting retail pharmacy leads despite being a bulk API/ingredient supplier.",
+        "issues": [
+          "Lead quality dropped",
+          "BL filters not working"
+        ],
+        "quote": "I need bulk pharma buyers, not medical shops. Fix the filter or I'm leaving.",
+        "disposition": "Skeptical",
+        "competitorMentioned": "",
+        "commitmentByExec": "Raised P1 BL filter ticket for pharma category",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-20008",
+    "name": "Pooja Bansal",
+    "company": "Bansal IT Distributors",
+    "city": "Noida",
+    "category": "IT Hardware & Peripherals",
+    "packageType": "Gold",
+    "arr": 115000,
+    "status": "Pending",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 70
+        },
+        {
+          "month": "Apr",
+          "value": 66
+        },
+        {
+          "month": "May",
+          "value": 59
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 63
+        },
+        {
+          "month": "Apr",
+          "value": 55
+        },
+        {
+          "month": "May",
+          "value": 51
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 70
+        },
+        {
+          "month": "Apr",
+          "value": 63
+        },
+        {
+          "month": "May",
+          "value": 55
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 70
+        },
+        {
+          "month": "Apr",
+          "value": 60
+        },
+        {
+          "month": "May",
+          "value": 57
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 35
+        },
+        {
+          "month": "Apr",
+          "value": 39
+        },
+        {
+          "month": "May",
+          "value": 42
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 67
+        },
+        {
+          "month": "Apr",
+          "value": 64
+        },
+        {
+          "month": "May",
+          "value": 62
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 63
+        },
+        {
+          "month": "Apr",
+          "value": 62
+        },
+        {
+          "month": "May",
+          "value": 63
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-20008",
+        "date": "2026-04-29",
+        "durationMin": 15,
+        "agent": "Priya D.",
+        "sentiment": "Negative",
+        "summary": "Received IndiaB2B prospecting call. Comparing platform features and pricing.",
+        "issues": [
+          "Competitor offer received",
+          "Platform feature comparison"
+        ],
+        "quote": "IndiaB2B showed me a feature where buyers can schedule a call. Does IndiaMART have that?",
+        "disposition": "Skeptical",
+        "competitorMentioned": "IndiaB2B",
+        "commitmentByExec": "Highlighted PNS auto-connect as equivalent feature",
+        "source": "AUDIO"
+      }
+    ]
+  },
+  {
+    "id": "S-15994",
+    "name": "Kavita Joshi",
+    "company": "Joshi Furniture",
+    "city": "Jaipur",
+    "category": "Furniture",
+    "packageType": "Silver",
+    "arr": 55000,
+    "status": "Resolved",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 66
+        },
+        {
+          "month": "Apr",
+          "value": 61
+        },
+        {
+          "month": "May",
+          "value": 56
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 70
+        },
+        {
+          "month": "Apr",
+          "value": 65
+        },
+        {
+          "month": "May",
+          "value": 64
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 60
+        },
+        {
+          "month": "Apr",
+          "value": 54
+        },
+        {
+          "month": "May",
+          "value": 53
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 57
+        },
+        {
+          "month": "Apr",
+          "value": 52
+        },
+        {
+          "month": "May",
+          "value": 50
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 45
+        },
+        {
+          "month": "Apr",
+          "value": 40
+        },
+        {
+          "month": "May",
+          "value": 42
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 70
+        },
+        {
+          "month": "Apr",
+          "value": 69
+        },
+        {
+          "month": "May",
+          "value": 67
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 69
+        },
+        {
+          "month": "Apr",
+          "value": 68
+        },
+        {
+          "month": "May",
+          "value": 66
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-15994",
+        "date": "2026-04-05",
+        "durationMin": 5,
+        "agent": "Vikas K.",
+        "sentiment": "Neutral",
+        "summary": "Routine check-in. Seller concerned about slight dip but committed to renewal.",
+        "issues": [],
+        "quote": "",
+        "disposition": "Willing",
+        "competitorMentioned": "",
+        "commitmentByExec": "",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-11532",
+    "name": "Amit Patel",
+    "company": "Patel Machine Tools",
+    "city": "Ahmedabad",
+    "category": "Machinery",
+    "packageType": "Star",
+    "arr": 320000,
+    "status": "Resolved",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 92
+        },
+        {
+          "month": "Apr",
+          "value": 93
+        },
+        {
+          "month": "May",
+          "value": 89
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 85
+        },
+        {
+          "month": "Apr",
+          "value": 91
+        },
+        {
+          "month": "May",
+          "value": 91
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 85
+        },
+        {
+          "month": "Apr",
+          "value": 86
+        },
+        {
+          "month": "May",
+          "value": 90
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 79
+        },
+        {
+          "month": "Apr",
+          "value": 85
+        },
+        {
+          "month": "May",
+          "value": 89
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 25
+        },
+        {
+          "month": "Apr",
+          "value": 27
+        },
+        {
+          "month": "May",
+          "value": 24
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 87
+        },
+        {
+          "month": "Apr",
+          "value": 94
+        },
+        {
+          "month": "May",
+          "value": 90
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 74
+        },
+        {
+          "month": "Apr",
+          "value": 76
+        },
+        {
+          "month": "May",
+          "value": 77
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-11532",
+        "date": "2026-04-20",
+        "durationMin": 8,
+        "agent": "Rahul S.",
+        "sentiment": "Positive",
+        "summary": "Happy with platform performance. Asking about premium add-ons and IM Leader package.",
+        "issues": [],
+        "quote": "",
+        "disposition": "Willing",
+        "competitorMentioned": "",
+        "commitmentByExec": "",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-14778",
+    "name": "Neha Gupta",
+    "company": "Gupta Plastics",
+    "city": "Pune",
+    "category": "Plastics",
+    "packageType": "Platinum",
+    "arr": 195000,
+    "status": "Resolved",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 85
+        },
+        {
+          "month": "Apr",
+          "value": 90
+        },
+        {
+          "month": "May",
+          "value": 88
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 83
+        },
+        {
+          "month": "Apr",
+          "value": 84
+        },
+        {
+          "month": "May",
+          "value": 84
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 79
+        },
+        {
+          "month": "Apr",
+          "value": 80
+        },
+        {
+          "month": "May",
+          "value": 82
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 80
+        },
+        {
+          "month": "Apr",
+          "value": 78
+        },
+        {
+          "month": "May",
+          "value": 79
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 25
+        },
+        {
+          "month": "Apr",
+          "value": 28
+        },
+        {
+          "month": "May",
+          "value": 28
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 84
+        },
+        {
+          "month": "Apr",
+          "value": 86
+        },
+        {
+          "month": "May",
+          "value": 86
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 81
+        },
+        {
+          "month": "Apr",
+          "value": 84
+        },
+        {
+          "month": "May",
+          "value": 84
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-14778",
+        "date": "2026-04-12",
+        "durationMin": 6,
+        "agent": "Priya D.",
+        "sentiment": "Positive",
+        "summary": "Seller satisfied. Mentioned strong order growth this quarter.",
+        "issues": [],
+        "quote": "",
+        "disposition": "Willing",
+        "competitorMentioned": "",
+        "commitmentByExec": "",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-13456",
+    "name": "Anjali Nair",
+    "company": "Nair Packaging",
+    "city": "Kochi",
+    "category": "Packaging",
+    "packageType": "Silver",
+    "arr": 65000,
+    "status": "Resolved",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 82
+        },
+        {
+          "month": "Apr",
+          "value": 76
+        },
+        {
+          "month": "May",
+          "value": 75
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 73
+        },
+        {
+          "month": "Apr",
+          "value": 71
+        },
+        {
+          "month": "May",
+          "value": 74
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 76
+        },
+        {
+          "month": "Apr",
+          "value": 79
+        },
+        {
+          "month": "May",
+          "value": 81
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 72
+        },
+        {
+          "month": "Apr",
+          "value": 70
+        },
+        {
+          "month": "May",
+          "value": 70
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 32
+        },
+        {
+          "month": "Apr",
+          "value": 38
+        },
+        {
+          "month": "May",
+          "value": 38
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 80
+        },
+        {
+          "month": "Apr",
+          "value": 82
+        },
+        {
+          "month": "May",
+          "value": 80
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 78
+        },
+        {
+          "month": "Apr",
+          "value": 80
+        },
+        {
+          "month": "May",
+          "value": 78
+        }
+      ]
+    },
+    "callInsights": []
+  },
+  {
+    "id": "S-20009",
+    "name": "Ravi Nambiar",
+    "company": "Nambiar Automation Systems",
+    "city": "Chennai",
+    "category": "Industrial Automation",
+    "packageType": "Star",
+    "arr": 285000,
+    "status": "Resolved",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 93
+        },
+        {
+          "month": "Apr",
+          "value": 92
+        },
+        {
+          "month": "May",
+          "value": 90
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 78
+        },
+        {
+          "month": "Apr",
+          "value": 78
+        },
+        {
+          "month": "May",
+          "value": 81
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 86
+        },
+        {
+          "month": "Apr",
+          "value": 92
+        },
+        {
+          "month": "May",
+          "value": 93
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 82
+        },
+        {
+          "month": "Apr",
+          "value": 85
+        },
+        {
+          "month": "May",
+          "value": 87
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 20
+        },
+        {
+          "month": "Apr",
+          "value": 16
+        },
+        {
+          "month": "May",
+          "value": 15
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 86
+        },
+        {
+          "month": "Apr",
+          "value": 87
+        },
+        {
+          "month": "May",
+          "value": 86
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 83
+        },
+        {
+          "month": "Apr",
+          "value": 82
+        },
+        {
+          "month": "May",
+          "value": 89
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-20009",
+        "date": "2026-05-02",
+        "durationMin": 7,
+        "agent": "Vikas K.",
+        "sentiment": "Positive",
+        "summary": "Seller very satisfied. Mentioned 3 large OEM orders via platform this quarter.",
+        "issues": [],
+        "quote": "",
+        "disposition": "Willing",
+        "competitorMentioned": "",
+        "commitmentByExec": "",
+        "source": "MERP"
+      }
+    ]
+  },
+  {
+    "id": "S-20010",
+    "name": "Prerna Agarwal",
+    "company": "Agarwal Industrial Chem",
+    "city": "Delhi",
+    "category": "Industrial Chemicals",
+    "packageType": "Platinum",
+    "arr": 210000,
+    "status": "Resolved",
+    "priorChurn": false,
+    "metrics": {
+      "loginPct": [
+        {
+          "month": "Mar",
+          "value": 88
+        },
+        {
+          "month": "Apr",
+          "value": 87
+        },
+        {
+          "month": "May",
+          "value": 87
+        }
+      ],
+      "blConsumptionPct": [
+        {
+          "month": "Mar",
+          "value": 74
+        },
+        {
+          "month": "Apr",
+          "value": 71
+        },
+        {
+          "month": "May",
+          "value": 78
+        }
+      ],
+      "pnsPickupRatePct": [
+        {
+          "month": "Mar",
+          "value": 80
+        },
+        {
+          "month": "Apr",
+          "value": 81
+        },
+        {
+          "month": "May",
+          "value": 84
+        }
+      ],
+      "lmsReplyRatePct": [
+        {
+          "month": "Mar",
+          "value": 77
+        },
+        {
+          "month": "Apr",
+          "value": 81
+        },
+        {
+          "month": "May",
+          "value": 81
+        }
+      ],
+      "retailBlRecommendedPct": [
+        {
+          "month": "Mar",
+          "value": 21
+        },
+        {
+          "month": "Apr",
+          "value": 20
+        },
+        {
+          "month": "May",
+          "value": 21
+        }
+      ],
+      "catalogScore": [
+        {
+          "month": "Mar",
+          "value": 81
+        },
+        {
+          "month": "Apr",
+          "value": 81
+        },
+        {
+          "month": "May",
+          "value": 81
+        }
+      ],
+      "cqs": [
+        {
+          "month": "Mar",
+          "value": 77
+        },
+        {
+          "month": "Apr",
+          "value": 73
+        },
+        {
+          "month": "May",
+          "value": 77
+        }
+      ]
+    },
+    "callInsights": [
+      {
+        "id": "C1",
+        "sellerId": "S-20010",
+        "date": "2026-04-28",
+        "durationMin": 9,
+        "agent": "Rahul S.",
+        "sentiment": "Positive",
+        "summary": "Strong renewal intent. Exploring upgrade to Star package for higher BL allocation.",
+        "issues": [],
+        "quote": "",
+        "disposition": "Willing",
+        "competitorMentioned": "",
+        "commitmentByExec": "Sent Star package proposal",
+        "source": "MERP"
+      }
+    ]
+  }
+]
