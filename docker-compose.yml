@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  ml:
+    build:
+      context: ./ml
+    ports:
+      - "8001:8001"
+    volumes:
+      - db_data:/data
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - db_data:/data
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - ml
+
+  frontend:
+    build:
+      context: .
+    ports:
+      - "5173:8080"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
