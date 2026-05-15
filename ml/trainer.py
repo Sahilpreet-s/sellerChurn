@@ -23,6 +23,7 @@ FEATURE_COLS = [
     "lmsPct_last",   "lmsPct_drop",
     "retailPct_last", "catalogScore", "cqs",
     "priorChurn",    "daysToRenewal", "arr_norm",
+    "hasCompetitor", "disposition", "churnReasonCount", "hasExecCommitment",
 ]
 
 
@@ -56,11 +57,11 @@ def train(db_path: str = DB_PATH) -> dict:
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     model = xgb.XGBClassifier(
-        n_estimators=100,
-        max_depth=4,
+        n_estimators=60,
+        max_depth=3,
         learning_rate=0.1,
         subsample=0.8,
-        colsample_bytree=0.8,
+        colsample_bytree=0.7,
         use_label_encoder=False,
         eval_metric="logloss",
         random_state=42,

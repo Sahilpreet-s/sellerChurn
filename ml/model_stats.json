@@ -1,0 +1,36 @@
+{
+  "trainingExamples": 500,
+  "auc": 0.8305,
+  "previousAuc": 0.8928,
+  "swapped": false,
+  "topFeatures": [
+    "churnReasonCount",
+    "loginPct_drop",
+    "disposition",
+    "hasExecCommitment",
+    "hasCompetitor"
+  ],
+  "featureImportances": {
+    "loginPct_last": 0.0265,
+    "loginPct_drop": 0.1094,
+    "blPct_last": 0.0378,
+    "blPct_drop": 0.0305,
+    "pnsPct_last": 0.0363,
+    "pnsPct_drop": 0.0332,
+    "lmsPct_last": 0.0288,
+    "lmsPct_drop": 0.0261,
+    "retailPct_last": 0.0465,
+    "catalogScore": 0.0201,
+    "cqs": 0.0288,
+    "priorChurn": 0.0,
+    "daysToRenewal": 0.0322,
+    "arr_norm": 0.0253,
+    "hasCompetitor": 0.0817,
+    "disposition": 0.0962,
+    "churnReasonCount": 0.2498,
+    "hasExecCommitment": 0.0908
+  },
+  "nextRetrainAt": 5000,
+  "lastTrainedAt": "2026-05-15T19:44:56.609470Z",
+  "modelActive": true
+}

@@ -9,66 +9,77 @@ import (
 	"os"
 )
 
-const model = "claude-sonnet-4-6"
-const anthropicVersion = "2023-06-01"
+const geminiModel = "gemini-2.5-flash"
+const geminiBase = "https://generativelanguage.googleapis.com/v1beta/models/"
 
-type message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type request struct {
-	Model     string    `json:"model"`
-	MaxTokens int       `json:"max_tokens"`
-	System    string    `json:"system"`
-	Messages  []message `json:"messages"`
-}
-
-type contentBlock struct {
-	Type string `json:"type"`
+type geminiPart struct {
 	Text string `json:"text"`
 }
 
-type response struct {
-	Content []contentBlock `json:"content"`
+type geminiContent struct {
+	Role  string       `json:"role,omitempty"`
+	Parts []geminiPart `json:"parts"`
 }
 
-// Call sends a single-turn request to Claude and returns the text response.
+type geminiRequest struct {
+	SystemInstruction *geminiContent  `json:"system_instruction,omitempty"`
+	Contents          []geminiContent `json:"contents"`
+	GenerationConfig  map[string]any  `json:"generationConfig,omitempty"`
+}
+
+type geminiResponse struct {
+	Candidates []struct {
+		Content struct {
+			Parts []geminiPart `json:"parts"`
+		} `json:"content"`
+	} `json:"candidates"`
+}
+
+// Call sends a single-turn request to Gemini 2.5 Flash and returns the text response.
 func Call(system, user string, maxTokens int) (string, error) {
-	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {
-		return "", fmt.Errorf("ANTHROPIC_API_KEY not set")
+		return "", fmt.Errorf("GEMINI_API_KEY not set")
 	}
 
-	body, _ := json.Marshal(request{
-		Model:     model,
-		MaxTokens: maxTokens,
-		System:    system,
-		Messages:  []message{{Role: "user", Content: user}},
-	})
+	reqBody := geminiRequest{
+		Contents: []geminiContent{
+			{Role: "user", Parts: []geminiPart{{Text: user}}},
+		},
+		GenerationConfig: map[string]any{
+			"maxOutputTokens":  maxTokens,
+			"responseMimeType": "application/json",
+		},
+	}
+	if system != "" {
+		reqBody.SystemInstruction = &geminiContent{
+			Parts: []geminiPart{{Text: system}},
+		}
+	}
 
-	req, _ := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewReader(body))
+	body, _ := json.Marshal(reqBody)
+
+	url := geminiBase + geminiModel + ":generateContent?key=" + apiKey
+	req, _ := http.NewRequest("POST", url, bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-api-key", apiKey)
-	req.Header.Set("anthropic-version", anthropicVersion)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("anthropic request: %w", err)
+		return "", fmt.Errorf("gemini request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	raw, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("anthropic %d: %s", resp.StatusCode, raw)
+		return "", fmt.Errorf("gemini %d: %s", resp.StatusCode, raw)
 	}
 
-	var out response
+	var out geminiResponse
 	if err := json.Unmarshal(raw, &out); err != nil {
 		return "", fmt.Errorf("parse response: %w", err)
 	}
-	if len(out.Content) == 0 {
-		return "", fmt.Errorf("empty content from claude")
+	if len(out.Candidates) == 0 || len(out.Candidates[0].Content.Parts) == 0 {
+		return "", fmt.Errorf("empty response from gemini")
 	}
-	return out.Content[0].Text, nil
+	return out.Candidates[0].Content.Parts[0].Text, nil
 }

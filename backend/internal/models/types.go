@@ -75,13 +75,19 @@ type PatternAlert struct {
 
 // OutcomeRecord is written to SQLite when a KAM logs the result of a retention call.
 type OutcomeRecord struct {
-	ID              int64   `json:"id"`
-	SellerID        string  `json:"sellerId"`
-	Outcome         string  `json:"outcome"` // Resolved | Escalated | Churned
-	Notes           string  `json:"notes"`
-	RiskScoreAtTime int     `json:"riskScoreAtTime"`
-	FeatureSnapshot string  `json:"featureSnapshot"` // JSON blob of all signals
-	LoggedAt        string  `json:"loggedAt"`
+	ID                  int64    `json:"id"`
+	SellerID            string   `json:"sellerId"`
+	Outcome             string   `json:"outcome"` // Resolved | Escalated | Churned
+	Notes               string   `json:"notes"`
+	Disposition         string   `json:"disposition,omitempty"`          // Willing | Skeptical | Hostile
+	ChurnReasons        []string `json:"churnReasons,omitempty"`         // predefined reason codes
+	CompetitorMentioned string   `json:"competitorMentioned,omitempty"`
+	ExecCommitment      string   `json:"execCommitment,omitempty"`
+	FollowUpDate        string   `json:"followUpDate,omitempty"`
+	CustomReason        string   `json:"customReason,omitempty"`
+	RiskScoreAtTime     int      `json:"riskScoreAtTime"`
+	FeatureSnapshot     string   `json:"featureSnapshot"`
+	LoggedAt            string   `json:"loggedAt"`
 }
 
 // MLStats is returned by the Python service.

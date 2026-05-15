@@ -23,7 +23,6 @@ func SetupRouter(st *Store) *gin.Engine {
 		v1.POST("/sellers/:id/guide", st.GetRetentionGuide)
 
 		v1.POST("/audio/upload", st.UploadAudio)
-		v1.POST("/merp/extract", st.ExtractMerpNote)
 
 		v1.GET("/patterns", st.GetPatterns)
 		v1.GET("/stats", st.GetStats)

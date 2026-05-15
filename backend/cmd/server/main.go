@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"sellerpulse/internal/api"
 	"sellerpulse/internal/classifier"
@@ -55,13 +56,19 @@ func loadSellers(path string) ([]models.Seller, error) {
 		return nil, fmt.Errorf("decode: %w", err)
 	}
 
+	// Spread renewal dates realistically — high-risk sellers tend to renew sooner
+	// Two sellers intentionally share a date (45, 90) to mimic real cohort overlap
+	renewalDaysTable := []int{38, 45, 52, 62, 45, 68, 75, 84, 90, 110, 90, 72, 120, 135, 60, 148, 155, 42, 180, 88}
+
+	now := time.Now().UTC()
 	sellers := make([]models.Seller, len(raw))
 	for i, r := range raw {
 		cause := classifier.ChurnCause(r)
+		days := renewalDaysTable[i%len(renewalDaysTable)]
 		sellers[i] = models.Seller{
 			RawSeller:        r,
-			RenewalDate:      "2026-08-13",
-			DaysToRenewal:    90,
+			RenewalDate:      now.AddDate(0, 0, days).Format("2006-01-02"),
+			DaysToRenewal:    days,
 			RiskScore:        scorer.CalcRisk(r),
 			ChurnCause:       cause,
 			ChurnCauseReason: classifier.ChurnCauseReason(r, cause),

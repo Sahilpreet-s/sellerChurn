@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"sellerpulse/internal/audio"
@@ -113,6 +113,7 @@ func (st *Store) GetSeller(c *gin.Context) {
 func (st *Store) GetStats(c *gin.Context) {
 	var high, med, low int
 	var arrAtRisk int
+	minDays := int(^uint(0) >> 1)
 	for _, s := range st.Sellers {
 		switch scorer.RiskBand(s.RiskScore) {
 		case "High":
@@ -123,14 +124,18 @@ func (st *Store) GetStats(c *gin.Context) {
 		default:
 			low++
 		}
+		if s.DaysToRenewal > 0 && s.DaysToRenewal < minDays {
+			minDays = s.DaysToRenewal
+		}
 	}
+	cohortDate := time.Now().UTC().AddDate(0, 0, minDays).Format("2006-01-02")
 	c.JSON(http.StatusOK, gin.H{
 		"total":      len(st.Sellers),
 		"high":       high,
 		"medium":     med,
 		"low":        low,
 		"arrAtRisk":  arrAtRisk,
-		"cohortDate": "2026-08-13",
+		"cohortDate": cohortDate,
 	})
 }
 
@@ -149,34 +154,57 @@ func (st *Store) LogOutcome(c *gin.Context) {
 	}
 
 	var body struct {
-		Outcome string `json:"outcome" binding:"required"`
-		Notes   string `json:"notes"`
+		Outcome             string   `json:"outcome" binding:"required"`
+		Notes               string   `json:"notes"`
+		Disposition         string   `json:"disposition"`
+		ChurnReasons        []string `json:"churnReasons"`
+		CompetitorMentioned string   `json:"competitorMentioned"`
+		ExecCommitment      string   `json:"execCommitment"`
+		FollowUpDate        string   `json:"followUpDate"`
+		CustomReason        string   `json:"customReason"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Build feature snapshot
-	m := s.Metrics
-	features := map[string]float64{
-		"loginPct_last":    latestF(m.LoginPct),
-		"loginPct_drop":    dropF(m.LoginPct),
-		"blPct_last":       latestF(m.BlConsumptionPct),
-		"blPct_drop":       dropF(m.BlConsumptionPct),
-		"pnsPct_last":      latestF(m.PnsPickupRatePct),
-		"pnsPct_drop":      dropF(m.PnsPickupRatePct),
-		"lmsPct_last":      latestF(m.LmsReplyRatePct),
-		"lmsPct_drop":      dropF(m.LmsReplyRatePct),
-		"retailPct_last":   latestF(m.RetailBlRecommendedPct),
-		"catalogScore":     latestF(m.CatalogScore),
-		"cqs":              latestF(m.Cqs),
-		"priorChurn":       boolToFloat(s.PriorChurn),
-		"daysToRenewal":    float64(s.DaysToRenewal),
-		"arr_norm":         float64(s.ARR) / 350000.0,
+	// Encode disposition as numeric for ML
+	dispositionScore := 0.0
+	switch body.Disposition {
+	case "Skeptical":
+		dispositionScore = 0.5
+	case "Hostile":
+		dispositionScore = 1.0
 	}
 
-	rec, err := st.OutcomeStore.LogOutcome(sellerID, body.Outcome, body.Notes, s.RiskScore, features)
+	// Build feature snapshot — metrics + executive feedback signals
+	m := s.Metrics
+	features := map[string]float64{
+		"loginPct_last":      latestF(m.LoginPct),
+		"loginPct_drop":      dropF(m.LoginPct),
+		"blPct_last":         latestF(m.BlConsumptionPct),
+		"blPct_drop":         dropF(m.BlConsumptionPct),
+		"pnsPct_last":        latestF(m.PnsPickupRatePct),
+		"pnsPct_drop":        dropF(m.PnsPickupRatePct),
+		"lmsPct_last":        latestF(m.LmsReplyRatePct),
+		"lmsPct_drop":        dropF(m.LmsReplyRatePct),
+		"retailPct_last":     latestF(m.RetailBlRecommendedPct),
+		"catalogScore":       latestF(m.CatalogScore),
+		"cqs":                latestF(m.Cqs),
+		"priorChurn":         boolToFloat(s.PriorChurn),
+		"daysToRenewal":      float64(s.DaysToRenewal),
+		"arr_norm":           float64(s.ARR) / 350000.0,
+		"hasCompetitor":      boolToFloat(body.CompetitorMentioned != ""),
+		"disposition":        dispositionScore,
+		"churnReasonCount":   float64(len(body.ChurnReasons)) / 9.0,
+		"hasExecCommitment":  boolToFloat(body.ExecCommitment != ""),
+	}
+
+	rec, err := st.OutcomeStore.LogOutcome(
+		sellerID, body.Outcome, body.Notes, body.Disposition,
+		body.ChurnReasons, body.CompetitorMentioned, body.ExecCommitment,
+		body.FollowUpDate, body.CustomReason, s.RiskScore, features,
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -234,40 +262,11 @@ func (st *Store) GetRetentionGuide(c *gin.Context) {
 
 // POST /api/v1/audio/upload
 func (st *Store) UploadAudio(c *gin.Context) {
-	sellerID := c.PostForm("sellerId")
-	agent := c.PostForm("agent")
-	if agent == "" {
-		agent = "Unknown Agent"
-	}
-
-	file, header, err := c.Request.FormFile("file")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file required"})
-		return
-	}
-	defer file.Close()
-
-	audioData, _ := io.ReadAll(file)
-	insight, err := audio.ProcessAudio(audioData, header.Filename, sellerID, agent)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := st.OutcomeStore.SaveCallInsight(insight); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "save insight: " + err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, insight)
-}
-
-// POST /api/v1/merp/extract
-func (st *Store) ExtractMerpNote(c *gin.Context) {
 	var body struct {
-		RawNote  string `json:"rawNote" binding:"required"`
-		SellerID string `json:"sellerId" binding:"required"`
-		Agent    string `json:"agent"`
+		SellerID    string `json:"sellerId" binding:"required"`
+		Transcript  string `json:"transcript" binding:"required"`
+		Agent       string `json:"agent"`
+		DurationMin int    `json:"durationMin"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -277,10 +276,13 @@ func (st *Store) ExtractMerpNote(c *gin.Context) {
 		body.Agent = "Unknown Agent"
 	}
 
-	insight, err := llm.ExtractMerpInsight(body.RawNote, body.SellerID, body.Agent)
+	insight, err := audio.ProcessTranscript(body.Transcript, body.SellerID, body.Agent)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+	if body.DurationMin > 0 {
+		insight.DurationMin = body.DurationMin
 	}
 
 	if err := st.OutcomeStore.SaveCallInsight(insight); err != nil {
@@ -290,6 +292,7 @@ func (st *Store) ExtractMerpNote(c *gin.Context) {
 
 	c.JSON(http.StatusOK, insight)
 }
+
 
 // GET /api/v1/ml/prediction/:id
 func (st *Store) GetMLPrediction(c *gin.Context) {

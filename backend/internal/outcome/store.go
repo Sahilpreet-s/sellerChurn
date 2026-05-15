@@ -22,13 +22,19 @@ func NewStore(dbPath string) (*Store, error) {
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS outcomes (
-			id               INTEGER PRIMARY KEY AUTOINCREMENT,
-			seller_id        TEXT NOT NULL,
-			outcome          TEXT NOT NULL,
-			notes            TEXT,
-			risk_score       INTEGER,
-			feature_snapshot TEXT,
-			logged_at        DATETIME DEFAULT CURRENT_TIMESTAMP
+			id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+			seller_id            TEXT NOT NULL,
+			outcome              TEXT NOT NULL,
+			notes                TEXT,
+			disposition          TEXT,
+			churn_reasons        TEXT,
+			competitor_mentioned TEXT,
+			exec_commitment      TEXT,
+			follow_up_date       TEXT,
+			custom_reason        TEXT,
+			risk_score           INTEGER,
+			feature_snapshot     TEXT,
+			logged_at            DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
 		CREATE TABLE IF NOT EXISTS call_insights (
 			id                   TEXT PRIMARY KEY,
@@ -55,13 +61,15 @@ func NewStore(dbPath string) (*Store, error) {
 }
 
 // LogOutcome saves a KAM-logged retention outcome and the feature snapshot.
-func (s *Store) LogOutcome(sellerID, outcome, notes string, riskScore int, features map[string]float64) (models.OutcomeRecord, error) {
+func (s *Store) LogOutcome(sellerID, outcome, notes, disposition string, churnReasons []string, competitorMentioned, execCommitment, followUpDate, customReason string, riskScore int, features map[string]float64) (models.OutcomeRecord, error) {
 	snap, _ := json.Marshal(features)
+	reasons, _ := json.Marshal(churnReasons)
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	res, err := s.db.Exec(
-		`INSERT INTO outcomes (seller_id, outcome, notes, risk_score, feature_snapshot, logged_at) VALUES (?,?,?,?,?,?)`,
-		sellerID, outcome, notes, riskScore, string(snap), now,
+		`INSERT INTO outcomes (seller_id, outcome, notes, disposition, churn_reasons, competitor_mentioned, exec_commitment, follow_up_date, custom_reason, risk_score, feature_snapshot, logged_at)
+		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+		sellerID, outcome, notes, disposition, string(reasons), competitorMentioned, execCommitment, followUpDate, customReason, riskScore, string(snap), now,
 	)
 	if err != nil {
 		return models.OutcomeRecord{}, err
@@ -69,8 +77,10 @@ func (s *Store) LogOutcome(sellerID, outcome, notes string, riskScore int, featu
 	id, _ := res.LastInsertId()
 	return models.OutcomeRecord{
 		ID: id, SellerID: sellerID, Outcome: outcome,
-		Notes: notes, RiskScoreAtTime: riskScore,
-		FeatureSnapshot: string(snap), LoggedAt: now,
+		Notes: notes, Disposition: disposition, ChurnReasons: churnReasons,
+		CompetitorMentioned: competitorMentioned, ExecCommitment: execCommitment,
+		FollowUpDate: followUpDate, CustomReason: customReason,
+		RiskScoreAtTime: riskScore, FeatureSnapshot: string(snap), LoggedAt: now,
 	}, nil
 }
 
