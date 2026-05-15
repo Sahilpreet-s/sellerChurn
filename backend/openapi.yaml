@@ -19,6 +19,8 @@ tags:
     description: Call transcript processing
   - name: Patterns
     description: Systemic risk pattern detection
+  - name: Playbook
+    description: Archetype-level retention playbook synthesized from historical outcomes
   - name: ML
     description: XGBoost churn prediction model
 
@@ -47,7 +49,7 @@ paths:
           description: Filter by package type
           schema:
             type: string
-            enum: [Catalog, Silver, Gold, Platinum, Star]
+            enum: [MDC, TrustSEAL, Maximiser, "IM Star", "IM Leader"]
         - name: q
           in: query
           description: Search by seller name, company, or ID (case-insensitive)
@@ -92,7 +94,10 @@ paths:
       description: |
         Saves the result of a KAM retention call. Captures both the outcome label
         (for ML training) and structured executive feedback (disposition, churn reasons,
-        competitor intelligence) that metrics alone cannot provide.
+        competitor intelligence) that metrics alone cannot provide. Executive feedback
+        fields (execCommitment, churnReasons, disposition) are stored with the seller's
+        archetype and feed into the playbook synthesis — every logged outcome makes
+        future retention guides smarter.
       parameters:
         - name: id
           in: path
@@ -220,6 +225,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatsResponse'
+
+  /playbook:
+    get:
+      tags: [Playbook]
+      summary: Get all playbook entries
+      description: |
+        Returns synthesized retention playbook entries for every archetype that has
+        enough historical outcomes. Each entry contains winning approaches, failed
+        approaches, a key insight, and explicit do-not-dos — all derived from past
+        KAM call outcomes via Gemini synthesis.
+      responses:
+        '200':
+          description: List of playbook entries (one per archetype)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlaybookEntry'
+
+  /playbook/rebuild:
+    post:
+      tags: [Playbook]
+      summary: Rebuild playbook from latest outcomes
+      description: |
+        Triggers Gemini to re-synthesize playbook entries from all labeled outcomes
+        in the database. Groups outcomes by seller archetype, sends each group to
+        Gemini, and upserts the resulting entry. Guide cache is invalidated so the
+        next guide generation uses the fresh playbook. Runs sequentially across
+        archetypes to respect Gemini rate limits (~1 min for 5 archetypes).
+      responses:
+        '200':
+          description: Rebuild result with count and updated entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rebuilt:
+                    type: integer
+                    description: Number of archetype entries successfully synthesized
+                    example: 5
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlaybookEntry'
+        '500':
+          description: Gemini API error or synthesis failure
 
   /ml/prediction/{id}:
     get:
@@ -385,7 +438,7 @@ components:
           example: Construction Materials
         packageType:
           type: string
-          enum: [Catalog, Silver, Gold, Platinum, Star]
+          enum: [MDC, TrustSEAL, Maximiser, "IM Star", "IM Leader"]
         arr:
           type: integer
           description: Annual Recurring Revenue in INR
@@ -593,6 +646,56 @@ components:
           type: string
           format: date
           example: "2026-06-22"
+
+    PlaybookEntry:
+      type: object
+      properties:
+        archetype:
+          type: string
+          enum: [Overwhelmed Starter, ROI Doubter, Platform Victim, Competitor Target, Seasonal Dip, Healthy]
+          example: ROI Doubter
+        sampleSize:
+          type: integer
+          description: Number of historical outcomes this entry was synthesized from
+          example: 7
+        retentionRate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Fraction of cases in this archetype group that were retained
+          example: 0.57
+        winningApproaches:
+          type: array
+          description: Exec commitments and approaches that correlated with Resolved outcomes
+          items:
+            type: string
+          example:
+            - "Calculate ROI on the call using seller's own numbers and share via WhatsApp"
+            - "Upgrade BL filter criteria immediately and schedule a 30-day quality review"
+        failedApproaches:
+          type: array
+          description: Approaches that appeared in Churned outcomes or showed no effect
+          items:
+            type: string
+          example:
+            - "Generic discount without addressing the lead quality root cause"
+            - "Vague promises that leads will improve next quarter"
+        keyInsight:
+          type: string
+          description: Single most important lesson for KAMs calling this archetype
+          example: "ROI Doubters respond to data and accountability, not reassurance."
+        doNotDo:
+          type: array
+          description: Specific mistakes to avoid with this archetype
+          items:
+            type: string
+          example:
+            - "Do not open with pricing concessions"
+            - "Do not make commitments without specific review dates"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-05-16T10:00:00Z"
 
     MLPrediction:
       type: object

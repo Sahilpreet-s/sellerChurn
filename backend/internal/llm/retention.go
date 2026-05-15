@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
 	"sellerpulse/internal/models"
 )
 
@@ -20,12 +21,14 @@ Rules:
 - Reference the seller's EXACT metric numbers in the pitch, never generic percentages.
 - Each section must have a clear opening pitch the exec can read aloud, and 3 concrete actions.
 - If a competitor was mentioned, address it directly in the relevant section.
+- If historical playbook data is provided, let it shape your recommendations — reference what has worked before.
 - Output ONLY valid JSON: an array of objects with keys "title" (string), "pitch" (string), "actions" (string[]).
 - 3–5 sections maximum.`
 
-// RetentionGuide generates a personalized retention call guide via Claude.
-func RetentionGuide(s models.Seller) ([]GuideSection, error) {
-	user := buildRetentionPrompt(s)
+// RetentionGuide generates a personalized retention call guide via Gemini.
+// playbook is optional — if non-nil, historical learnings are injected into the prompt.
+func RetentionGuide(s models.Seller, playbook *models.PlaybookEntry) ([]GuideSection, error) {
+	user := buildRetentionPrompt(s, playbook)
 	raw, err := Call(retentionSystem, user, 4096)
 	if err != nil {
 		return nil, err
@@ -38,7 +41,7 @@ func RetentionGuide(s models.Seller) ([]GuideSection, error) {
 	return sections, nil
 }
 
-func buildRetentionPrompt(s models.Seller) string {
+func buildRetentionPrompt(s models.Seller, playbook *models.PlaybookEntry) string {
 	m := s.Metrics
 
 	var sb strings.Builder
@@ -69,6 +72,25 @@ func buildRetentionPrompt(s models.Seller) string {
 			}
 			if c.CommitmentByExec != "" {
 				sb.WriteString(fmt.Sprintf("    Exec committed: %s\n", c.CommitmentByExec))
+			}
+		}
+	}
+
+	// Inject historical playbook learnings when available
+	if playbook != nil && playbook.SampleSize >= 3 {
+		sb.WriteString(fmt.Sprintf("\nHISTORICAL PLAYBOOK — %d similar %s cases (%.0f%% retention rate):\n",
+			playbook.SampleSize, playbook.Archetype, playbook.RetentionRate*100))
+		sb.WriteString(fmt.Sprintf("  KEY INSIGHT: %s\n", playbook.KeyInsight))
+		if len(playbook.WinningApproaches) > 0 {
+			sb.WriteString("  WHAT WORKS FOR THIS ARCHETYPE:\n")
+			for _, a := range playbook.WinningApproaches {
+				sb.WriteString(fmt.Sprintf("    ✓ %s\n", a))
+			}
+		}
+		if len(playbook.DoNotDo) > 0 {
+			sb.WriteString("  DO NOT DO:\n")
+			for _, d := range playbook.DoNotDo {
+				sb.WriteString(fmt.Sprintf("    ✗ %s\n", d))
 			}
 		}
 	}
