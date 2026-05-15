@@ -9,9 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ShowcaseRouteImport } from './routes/showcase'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SellerSellerIdRouteImport } from './routes/seller.$sellerId'
 
+const ShowcaseRoute = ShowcaseRouteImport.update({
+  id: '/showcase',
+  path: '/showcase',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -25,32 +37,54 @@ const SellerSellerIdRoute = SellerSellerIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/showcase': typeof ShowcaseRoute
   '/seller/$sellerId': typeof SellerSellerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/showcase': typeof ShowcaseRoute
   '/seller/$sellerId': typeof SellerSellerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/showcase': typeof ShowcaseRoute
   '/seller/$sellerId': typeof SellerSellerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/seller/$sellerId'
+  fullPaths: '/' | '/dashboard' | '/showcase' | '/seller/$sellerId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/seller/$sellerId'
-  id: '__root__' | '/' | '/seller/$sellerId'
+  to: '/' | '/dashboard' | '/showcase' | '/seller/$sellerId'
+  id: '__root__' | '/' | '/dashboard' | '/showcase' | '/seller/$sellerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
+  ShowcaseRoute: typeof ShowcaseRoute
   SellerSellerIdRoute: typeof SellerSellerIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/showcase': {
+      id: '/showcase'
+      path: '/showcase'
+      fullPath: '/showcase'
+      preLoaderRoute: typeof ShowcaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -70,6 +104,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
+  ShowcaseRoute: ShowcaseRoute,
   SellerSellerIdRoute: SellerSellerIdRoute,
 }
 export const routeTree = rootRouteImport

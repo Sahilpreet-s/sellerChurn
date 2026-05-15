@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -7,7 +8,7 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { Settings, TrendingDown, TrendingUp } from "lucide-react";
+import { PanelLeft, Settings, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { fetchSellers } from "@/lib/api";
 import { riskBand, type Seller } from "@/lib/mock-sellers";
 
@@ -161,7 +162,7 @@ function NavItem({
   );
 }
 
-function AppSidebar() {
+function AppSidebar({ onCollapse }: { onCollapse: () => void }) {
   const { sellers } = Route.useLoaderData();
   const location = useRouterState({ select: (s) => s.location });
   const currentView = ((location.search as { view?: string }).view ?? "churn") as ViewType;
@@ -179,10 +180,17 @@ function AppSidebar() {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold shrink-0">
             C
           </div>
-          <div className="overflow-hidden">
+          <div className="flex-1 overflow-hidden">
             <p className="text-sm font-semibold text-white leading-none truncate">ChurnGuard</p>
             <p className="text-[10px] text-zinc-500 mt-0.5 truncate">IndiaMART · Sales</p>
           </div>
+          <button
+            onClick={onCollapse}
+            className="shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
+            title="Collapse sidebar"
+          >
+            <PanelLeft className="h-4 w-4 text-zinc-400" />
+          </button>
         </div>
       </div>
 
@@ -222,6 +230,25 @@ function AppSidebar() {
             />
           </div>
         </div>
+
+        <div>
+          <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            Product
+          </p>
+          <div className="space-y-0.5">
+            <Link
+              to="/showcase"
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150 group ${
+                location.pathname === "/showcase"
+                  ? "bg-white/10 text-white"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Sparkles className={`h-4 w-4 shrink-0 transition-colors ${location.pathname === "/showcase" ? "text-white" : "text-zinc-500 group-hover:text-zinc-300"}`} />
+              <span className="flex-1 truncate">Showcase</span>
+            </Link>
+          </div>
+        </div>
       </nav>
 
       {/* Footer */}
@@ -244,20 +271,36 @@ function AppSidebar() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isShowcase = pathname === "/showcase";
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex flex-col h-screen overflow-hidden">
-        {/* Top accent stripe — spans full width above sidebar + content */}
-        <div className="h-[3px] bg-gradient-to-r from-primary/40 via-primary to-primary/40 shrink-0" />
+      {isShowcase ? (
+        <Outlet />
+      ) : (
+        <div className="flex flex-col h-screen overflow-hidden">
+          {/* Top accent stripe — spans full width above sidebar + content */}
+          <div className="h-[3px] bg-gradient-to-r from-primary/40 via-primary to-primary/40 shrink-0" />
 
-        <div className="flex flex-1 overflow-hidden">
-          <AppSidebar />
-          <main className="flex-1 overflow-y-auto bg-gradient-to-b from-muted/20 to-muted/40 [scrollbar-gutter:stable]">
-            <Outlet />
-          </main>
+          <div className="flex flex-1 overflow-hidden relative">
+            {sidebarOpen && <AppSidebar onCollapse={() => setSidebarOpen(false)} />}
+            {!sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="absolute left-3 top-3 z-10 p-1.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                title="Open sidebar"
+              >
+                <PanelLeft className="h-4 w-4" />
+              </button>
+            )}
+            <main className="flex-1 overflow-y-auto bg-gradient-to-b from-muted/20 to-muted/40 [scrollbar-gutter:stable]">
+              <Outlet />
+            </main>
+          </div>
         </div>
-      </div>
+      )}
     </QueryClientProvider>
   );
 }

@@ -7,15 +7,16 @@ import {
   MessageSquare, Target, Zap, CheckCircle2,
 } from "lucide-react";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/showcase")({
   head: () => ({
     meta: [
-      { title: "ChurnGuard — Seller Churn Early Warning" },
+      { title: "Product Showcase — Seller Churn Early Warning" },
       { name: "description", content: "An animated walkthrough of every feature: risk scoring, call insights, retention guides and live dashboards." },
-      { property: "og:title", content: "ChurnGuard — Seller Churn Early Warning" },
+      { property: "og:title", content: "Product Showcase — Seller Churn Early Warning" },
+      { property: "og:description", content: "An animated walkthrough of every feature in the IndiaMART seller churn early warning system." },
     ],
   }),
-  component: LandingPage,
+  component: ShowcasePage,
 });
 
 const fadeUp: Variants = {
@@ -44,7 +45,7 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
   );
 }
 
-function LandingPage() {
+function ShowcasePage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 200]);
@@ -67,7 +68,7 @@ function LandingPage() {
             <a href="#insights" className="hover:text-foreground transition">Insights</a>
           </div>
           <Link
-            to="/dashboard"
+            to="/"
             className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background hover:opacity-90 transition"
           >
             Open dashboard <ArrowRight className="h-3.5 w-3.5" />
@@ -138,7 +139,7 @@ function LandingPage() {
             transition={{ duration: 0.7, delay: 0.5 }}
             className="mt-10 flex flex-wrap items-center justify-center gap-3"
           >
-            <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background hover:opacity-90 transition">
+            <Link to="/" className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background hover:opacity-90 transition">
               Launch the dashboard <ArrowRight className="h-4 w-4" />
             </Link>
             <a href="#features" className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium hover:bg-muted transition">
@@ -480,7 +481,7 @@ function LandingPage() {
             Open the live dashboard and see your at-risk cohort, ranked and ready to action.
           </motion.p>
           <motion.div variants={fadeUp} className="mt-10">
-            <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3.5 text-sm font-medium text-background hover:opacity-90 transition">
+            <Link to="/" className="inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3.5 text-sm font-medium text-background hover:opacity-90 transition">
               Open the dashboard <ArrowRight className="h-4 w-4" />
             </Link>
           </motion.div>
@@ -490,7 +491,7 @@ function LandingPage() {
       <footer className="border-t border-border py-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 text-xs text-muted-foreground">
           <span>&copy; ChurnGuard for IndiaMART</span>
-          <Link to="/dashboard" className="hover:text-foreground transition">Dashboard &rarr;</Link>
+          <Link to="/" className="hover:text-foreground transition">Dashboard &rarr;</Link>
         </div>
       </footer>
     </div>
