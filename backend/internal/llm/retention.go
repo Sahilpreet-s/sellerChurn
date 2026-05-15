@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
 	"sellerpulse/internal/models"
 )
 
@@ -27,15 +26,10 @@ Rules:
 // RetentionGuide generates a personalized retention call guide via Claude.
 func RetentionGuide(s models.Seller) ([]GuideSection, error) {
 	user := buildRetentionPrompt(s)
-	raw, err := Call(retentionSystem, user, 1500)
+	raw, err := Call(retentionSystem, user, 4096)
 	if err != nil {
 		return nil, err
 	}
-
-	// Strip markdown fences if Claude wraps in ```json
-	raw = strings.TrimPrefix(strings.TrimSpace(raw), "```json")
-	raw = strings.TrimSuffix(raw, "```")
-	raw = strings.TrimSpace(raw)
 
 	var sections []GuideSection
 	if err := json.Unmarshal([]byte(raw), &sections); err != nil {

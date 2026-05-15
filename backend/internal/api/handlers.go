@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"sellerpulse/internal/audio"
@@ -113,6 +114,7 @@ func (st *Store) GetSeller(c *gin.Context) {
 func (st *Store) GetStats(c *gin.Context) {
 	var high, med, low int
 	var arrAtRisk int
+	minDays := int(^uint(0) >> 1)
 	for _, s := range st.Sellers {
 		switch scorer.RiskBand(s.RiskScore) {
 		case "High":
@@ -123,14 +125,18 @@ func (st *Store) GetStats(c *gin.Context) {
 		default:
 			low++
 		}
+		if s.DaysToRenewal > 0 && s.DaysToRenewal < minDays {
+			minDays = s.DaysToRenewal
+		}
 	}
+	cohortDate := time.Now().UTC().AddDate(0, 0, minDays).Format("2006-01-02")
 	c.JSON(http.StatusOK, gin.H{
 		"total":      len(st.Sellers),
 		"high":       high,
 		"medium":     med,
 		"low":        low,
 		"arrAtRisk":  arrAtRisk,
-		"cohortDate": "2026-08-13",
+		"cohortDate": cohortDate,
 	})
 }
 
