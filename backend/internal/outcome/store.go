@@ -34,7 +34,15 @@ func NewStore(dbPath string) (*Store, error) {
 			custom_reason        TEXT,
 			risk_score           INTEGER,
 			feature_snapshot     TEXT,
+			archetype            TEXT,
 			logged_at            DATETIME DEFAULT CURRENT_TIMESTAMP
+		);
+		CREATE TABLE IF NOT EXISTS playbook_entries (
+			archetype      TEXT PRIMARY KEY,
+			sample_size    INTEGER,
+			retention_rate REAL,
+			synthesis      TEXT NOT NULL,
+			updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
 		CREATE TABLE IF NOT EXISTS call_insights (
 			id                   TEXT PRIMARY KEY,
@@ -57,19 +65,22 @@ func NewStore(dbPath string) (*Store, error) {
 		return nil, fmt.Errorf("create tables: %w", err)
 	}
 
+	// Migration: add archetype column to pre-existing outcomes tables (ignore error if already exists)
+	db.Exec(`ALTER TABLE outcomes ADD COLUMN archetype TEXT`)
+
 	return &Store{db: db}, nil
 }
 
 // LogOutcome saves a KAM-logged retention outcome and the feature snapshot.
-func (s *Store) LogOutcome(sellerID, outcome, notes, disposition string, churnReasons []string, competitorMentioned, execCommitment, followUpDate, customReason string, riskScore int, features map[string]float64) (models.OutcomeRecord, error) {
+func (s *Store) LogOutcome(sellerID, outcome, notes, disposition string, churnReasons []string, competitorMentioned, execCommitment, followUpDate, customReason string, riskScore int, archetype string, features map[string]float64) (models.OutcomeRecord, error) {
 	snap, _ := json.Marshal(features)
 	reasons, _ := json.Marshal(churnReasons)
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	res, err := s.db.Exec(
-		`INSERT INTO outcomes (seller_id, outcome, notes, disposition, churn_reasons, competitor_mentioned, exec_commitment, follow_up_date, custom_reason, risk_score, feature_snapshot, logged_at)
-		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-		sellerID, outcome, notes, disposition, string(reasons), competitorMentioned, execCommitment, followUpDate, customReason, riskScore, string(snap), now,
+		`INSERT INTO outcomes (seller_id, outcome, notes, disposition, churn_reasons, competitor_mentioned, exec_commitment, follow_up_date, custom_reason, risk_score, archetype, feature_snapshot, logged_at)
+		 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		sellerID, outcome, notes, disposition, string(reasons), competitorMentioned, execCommitment, followUpDate, customReason, riskScore, archetype, string(snap), now,
 	)
 	if err != nil {
 		return models.OutcomeRecord{}, err

@@ -27,6 +27,9 @@ func SetupRouter(st *Store) *gin.Engine {
 		v1.GET("/patterns", st.GetPatterns)
 		v1.GET("/stats", st.GetStats)
 
+		v1.GET("/playbook", st.GetPlaybook)
+		v1.POST("/playbook/rebuild", st.RebuildPlaybook)
+
 		v1.GET("/ml/prediction/:id", st.GetMLPrediction)
 		v1.GET("/ml/stats", st.GetMLStats)
 		v1.POST("/ml/train", st.TriggerTraining)

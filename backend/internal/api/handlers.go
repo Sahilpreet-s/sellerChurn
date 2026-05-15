@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"sellerpulse/internal/models"
 	"sellerpulse/internal/outcome"
 	"sellerpulse/internal/patterns"
+	"sellerpulse/internal/playbook"
 	"sellerpulse/internal/scorer"
 )
 
@@ -203,7 +205,7 @@ func (st *Store) LogOutcome(c *gin.Context) {
 	rec, err := st.OutcomeStore.LogOutcome(
 		sellerID, body.Outcome, body.Notes, body.Disposition,
 		body.ChurnReasons, body.CompetitorMentioned, body.ExecCommitment,
-		body.FollowUpDate, body.CustomReason, s.RiskScore, features,
+		body.FollowUpDate, body.CustomReason, s.RiskScore, s.Archetype, features,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -221,11 +223,28 @@ func (st *Store) LogOutcome(c *gin.Context) {
 	}
 
 	totalOutcomes := st.OutcomeStore.CountOutcomes()
+
+	// Rebuild playbook asynchronously every 10 real outcomes so the guide improves over time.
+	// Invalidate guide cache so next generation uses the fresh playbook.
+	if totalOutcomes%10 == 0 {
+		store := st
+		go func() {
+			if _, err := playbook.Synthesize(store.OutcomeStore); err != nil {
+				log.Printf("[playbook] async rebuild: %v", err)
+				return
+			}
+			<-store.guideCacheMu
+			store.guideCache = make(map[string][]llm.GuideSection)
+			store.guideCacheMu <- struct{}{}
+			log.Printf("[playbook] rebuilt after %d outcomes", totalOutcomes)
+		}()
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"record":         rec,
-		"totalOutcomes":  totalOutcomes,
-		"nextRetrainAt":  5000,
-		"message":        fmt.Sprintf("Outcome logged. %d training examples collected.", totalOutcomes),
+		"record":        rec,
+		"totalOutcomes": totalOutcomes,
+		"nextRetrainAt": 5000,
+		"message":       fmt.Sprintf("Outcome logged. %d training examples collected.", totalOutcomes),
 	})
 }
 
@@ -247,7 +266,10 @@ func (st *Store) GetRetentionGuide(c *gin.Context) {
 		return
 	}
 
-	sections, err := llm.RetentionGuide(s)
+	// Enrich guide with historical playbook learnings for this archetype (nil-safe if no entry yet)
+	pb, _ := st.OutcomeStore.GetPlaybookEntry(s.Archetype)
+
+	sections, err := llm.RetentionGuide(s, pb)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -293,6 +315,41 @@ func (st *Store) UploadAudio(c *gin.Context) {
 	c.JSON(http.StatusOK, insight)
 }
 
+
+// GET /api/v1/playbook
+func (st *Store) GetPlaybook(c *gin.Context) {
+	entries, err := st.OutcomeStore.GetAllPlaybookEntries()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if entries == nil {
+		entries = []models.PlaybookEntry{}
+	}
+	c.JSON(http.StatusOK, entries)
+}
+
+// POST /api/v1/playbook/rebuild
+func (st *Store) RebuildPlaybook(c *gin.Context) {
+	entries, err := playbook.Synthesize(st.OutcomeStore)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Invalidate guide cache — next guide generation will use the fresh playbook
+	<-st.guideCacheMu
+	st.guideCache = make(map[string][]llm.GuideSection)
+	st.guideCacheMu <- struct{}{}
+
+	if entries == nil {
+		entries = []models.PlaybookEntry{}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"rebuilt": len(entries),
+		"entries": entries,
+	})
+}
 
 // GET /api/v1/ml/prediction/:id
 func (st *Store) GetMLPrediction(c *gin.Context) {

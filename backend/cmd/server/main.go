@@ -12,6 +12,7 @@ import (
 	"sellerpulse/internal/config"
 	"sellerpulse/internal/models"
 	"sellerpulse/internal/outcome"
+	"sellerpulse/internal/playbook"
 	"sellerpulse/internal/scorer"
 )
 
@@ -32,6 +33,28 @@ func main() {
 	}
 	defer db.Close()
 	log.Printf("Outcome store ready. Training examples: %d", db.CountOutcomes())
+
+	// ── Playbook: build at startup only if no entries exist yet ──────────────
+	// (skips rebuild when entries are already populated from a prior run)
+	go func() {
+		existing, _ := db.GetAllPlaybookEntries()
+		if len(existing) > 0 {
+			log.Printf("Playbook: %d entries already present, skipping startup build", len(existing))
+			return
+		}
+		rows, _ := db.GetOutcomesForSynthesis()
+		if len(rows) < 3 {
+			log.Printf("Playbook: not enough outcomes yet (%d), skipping build", len(rows))
+			return
+		}
+		log.Printf("Playbook: building from %d outcomes (this takes ~1 min due to rate limiting)...", len(rows))
+		entries, err := playbook.Synthesize(db)
+		if err != nil {
+			log.Printf("Playbook build error: %v", err)
+			return
+		}
+		log.Printf("Playbook: %d archetype entries ready", len(entries))
+	}()
 
 	// ── API ───────────────────────────────────────────────────────────────────
 	store := api.NewStore(sellers, db, cfg.MLServiceURL)
