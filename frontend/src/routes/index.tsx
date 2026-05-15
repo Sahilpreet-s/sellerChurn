@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertTriangle, TrendingDown, TrendingUp, Users, IndianRupee,
-  Search, ChevronRight, ChevronLeft, Settings, Phone,
+  Search, ChevronRight, ChevronLeft, Settings,
 } from "lucide-react";
 
 // ─── View type ────────────────────────────────────────────────────────────────
@@ -101,12 +101,12 @@ function StatCard({ icon: Icon, label, value, sub, delay = 0 }: {
     >
       <Card className="border shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden relative cursor-default select-none">
         <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted/40 pointer-events-none" />
-        <CardContent className="pt-6 relative">
+        <CardContent className="pt-4 relative">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-muted-foreground">{label}</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p>
-              {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
+              <p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p>
+              {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
             </div>
             <div className="rounded-xl bg-gradient-to-br from-primary/25 to-primary/5 p-2.5 text-primary shadow-sm ring-1 ring-primary/10">
               <Icon className="h-5 w-5" />
@@ -211,22 +211,6 @@ function PlatformCallout() {
   );
 }
 
-function ChurnCallout() {
-  return (
-    <div className="animate-slide-in-up rounded-xl border border-destructive/30 bg-gradient-to-r from-destructive/5 to-transparent px-5 py-4 flex items-start gap-3">
-      <div className="h-9 w-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-        <Phone className="h-4 w-4 text-destructive" />
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-destructive">Prioritise for retention outreach</p>
-        <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-          These sellers show declining engagement driven by behavior or external factors.
-          Schedule retention calls this week — every day of delay increases churn probability.
-        </p>
-      </div>
-    </div>
-  );
-}
 
 function UpsellCallout() {
   return (
@@ -311,15 +295,15 @@ function Dashboard() {
   return (
     <div>
       <header className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="px-6 py-4">
+        <div className="px-6 py-3">
           <p className="text-xs text-muted-foreground">Workspace / {pageTitle}</p>
           <h1 className="mt-0.5 text-xl font-semibold tracking-tight">{pageTitle}</h1>
         </div>
       </header>
 
-      <div className="px-6 py-6 space-y-5">
+      <div className="px-6 py-4 space-y-4">
         {view === "platform" && <PlatformCallout />}
-        {view === "churn"    && <ChurnCallout />}
+
         {view === "upsell"   && <UpsellCallout />}
 
         <div className="grid gap-4 md:grid-cols-4">
