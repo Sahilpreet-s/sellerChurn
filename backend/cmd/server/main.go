@@ -81,7 +81,7 @@ func loadSellers(path string) ([]models.Seller, error) {
 
 	// Spread renewal dates realistically — high-risk sellers tend to renew sooner
 	// Two sellers intentionally share a date (45, 90) to mimic real cohort overlap
-	renewalDaysTable := []int{38, 45, 52, 62, 45, 68, 75, 84, 90, 110, 90, 72, 120, 135, 60, 148, 155, 42, 180, 88}
+	renewalDaysTable := []int{82, 85, 88, 84, 87, 80, 90, 92, 95, 110, 105, 88, 120, 130, 85, 145, 155, 90, 180, 92}
 
 	now := time.Now().UTC()
 	sellers := make([]models.Seller, len(raw))
