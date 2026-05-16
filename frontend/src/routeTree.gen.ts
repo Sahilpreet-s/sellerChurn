@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShowcaseRouteImport } from './routes/showcase'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SellerSellerIdRouteImport } from './routes/seller.$sellerId'
@@ -17,6 +18,11 @@ import { Route as SellerSellerIdRouteImport } from './routes/seller.$sellerId'
 const ShowcaseRoute = ShowcaseRouteImport.update({
   id: '/showcase',
   path: '/showcase',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -38,12 +44,14 @@ const SellerSellerIdRoute = SellerSellerIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/showcase': typeof ShowcaseRoute
   '/seller/$sellerId': typeof SellerSellerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/showcase': typeof ShowcaseRoute
   '/seller/$sellerId': typeof SellerSellerIdRoute
 }
@@ -51,20 +59,28 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/showcase': typeof ShowcaseRoute
   '/seller/$sellerId': typeof SellerSellerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/showcase' | '/seller/$sellerId'
+  fullPaths: '/' | '/dashboard' | '/demo' | '/showcase' | '/seller/$sellerId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/showcase' | '/seller/$sellerId'
-  id: '__root__' | '/' | '/dashboard' | '/showcase' | '/seller/$sellerId'
+  to: '/' | '/dashboard' | '/demo' | '/showcase' | '/seller/$sellerId'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/demo'
+    | '/showcase'
+    | '/seller/$sellerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  DemoRoute: typeof DemoRoute
   ShowcaseRoute: typeof ShowcaseRoute
   SellerSellerIdRoute: typeof SellerSellerIdRoute
 }
@@ -76,6 +92,13 @@ declare module '@tanstack/react-router' {
       path: '/showcase'
       fullPath: '/showcase'
       preLoaderRoute: typeof ShowcaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -105,6 +128,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  DemoRoute: DemoRoute,
   ShowcaseRoute: ShowcaseRoute,
   SellerSellerIdRoute: SellerSellerIdRoute,
 }

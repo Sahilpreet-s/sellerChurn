@@ -110,7 +110,20 @@ func (st *Store) ListSellers(c *gin.Context) {
 
 // GET /api/v1/sellers/:id
 func (st *Store) GetSeller(c *gin.Context) {
-	s, ok := st.findSeller(c.Param("id"))
+	id := c.Param("id")
+
+	// Numeric IDs are real IndiaMART GLIDs — fetch live from the data warehouse.
+	if isNumericGLID(id) {
+		result, err := fetchScorecard(id)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, result.Seller)
+		return
+	}
+
+	s, ok := st.findSeller(id)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "seller not found"})
 		return

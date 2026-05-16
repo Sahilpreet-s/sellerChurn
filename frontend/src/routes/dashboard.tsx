@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertTriangle, TrendingDown, TrendingUp, Users, IndianRupee,
-  Search, ChevronRight, ChevronLeft, Settings, Sparkles,
+  Search, ChevronRight, ChevronLeft, Settings, Sparkles, Zap,
 } from "lucide-react";
 
 // ─── View type ────────────────────────────────────────────────────────────────
@@ -245,7 +245,7 @@ function Dashboard() {
 
   const isViewSeller = useCallback((s: Seller) => {
     if (view === "platform") return s.churnCause === "PLATFORM_FAILURE";
-    if (view === "upsell") return s.riskScore < 55 && s.packageType !== "Star" && s.churnCause !== "PLATFORM_FAILURE";
+    if (view === "upsell") return s.riskScore < 55 && s.packageType !== "Maximiser" && s.churnCause !== "PLATFORM_FAILURE";
     return (CHURN_CAUSES as string[]).includes(s.churnCause);
   }, [view]);
 
@@ -281,7 +281,7 @@ function Dashboard() {
       high: vs.filter((s) => riskBand(s.riskScore) === "High").length,
       medium: vs.filter((s) => riskBand(s.riskScore) === "Medium").length,
       low: vs.filter((s) => riskBand(s.riskScore) === "Low").length,
-      entry: vs.filter((s) => s.packageType === "Catalog" || s.packageType === "Silver").length,
+      entry: vs.filter((s) => s.packageType === "MDC").length,
       arrAtRisk: vs.filter((s) => riskBand(s.riskScore) === "High").reduce((sum, s) => sum + s.arr, 0),
       totalArr: vs.reduce((sum, s) => sum + s.arr, 0),
     };
@@ -301,6 +301,13 @@ function Dashboard() {
           <span className="text-sm font-semibold tracking-tight">ChurnGuard</span>
           <span className="text-muted-foreground/40">·</span>
           <span className="text-sm text-muted-foreground">{pageTitle}</span>
+          <Link
+            to="/demo"
+            className="ml-auto flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+          >
+            <Zap className="h-3.5 w-3.5" />
+            See Agent in Action
+          </Link>
         </div>
       </header>
 
@@ -314,7 +321,7 @@ function Dashboard() {
             <>
               <StatCard icon={TrendingUp}   label="Upsell candidates"      value={String(computedStats.total)}  delay={0} />
               <StatCard icon={Users}        label="Low risk"                value={String(computedStats.low)}    sub="Stable engagement" delay={80} />
-              <StatCard icon={TrendingDown} label="Entry packages"          value={String(computedStats.entry)}  sub="Catalog / Silver" delay={160} />
+              <StatCard icon={TrendingDown} label="Entry packages"          value={String(computedStats.entry)}  sub="MDC package" delay={160} />
               <StatCard icon={IndianRupee}  label="Pipeline ARR"            value={`₹${(computedStats.totalArr / 100000).toFixed(1)}L`} sub="Current subscription value" delay={240} />
             </>
           ) : (
@@ -376,11 +383,11 @@ function Dashboard() {
                   <SelectTrigger className="sm:w-28"><SelectValue placeholder="Package" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All packages</SelectItem>
-                    <SelectItem value="Star">Star</SelectItem>
-                    <SelectItem value="Platinum">Platinum</SelectItem>
-                    <SelectItem value="Gold">Gold</SelectItem>
-                    <SelectItem value="Silver">Silver</SelectItem>
-                    <SelectItem value="Catalog">Catalog</SelectItem>
+                    <SelectItem value="Maximiser">Maximiser</SelectItem>
+                    <SelectItem value="IM Star">IM Star</SelectItem>
+                    <SelectItem value="IM Leader">IM Leader</SelectItem>
+                    <SelectItem value="TrustSEAL">TrustSEAL</SelectItem>
+                    <SelectItem value="MDC">MDC</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

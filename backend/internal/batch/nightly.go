@@ -124,42 +124,51 @@ func processSeller(s models.Seller, transcripts []string, store *outcome.Store, 
 	// Step 5: get historical playbook for this archetype (nil-safe).
 	pb, _ := store.GetPlaybookEntry(archetype)
 
-	// Step 6: single Gemini call.
-	// If today has transcripts: combined call extracts call insight AND generates the guide
-	// in one shot — the model has the raw seller voice in context while writing the guide,
-	// producing more coherent and specific output than two sequential calls would.
-	// If no transcripts: guide-only call using existing accumulated context.
+	// Step 6: try the Python LangGraph agent first.
+	// The agent does LLM-based cause classification + guide generation with full context
+	// (metrics, call insights, XGBoost output). Falls back to Go LLM on any error.
 	var guide []llm.GuideSection
-	if len(transcripts) > 0 {
-		result, err := llm.ProcessSellerBatch(enriched, transcripts, pb, mlProb)
-		if err != nil {
-			return 1, fmt.Errorf("combined batch call: %w", err)
-		}
-		insight := models.CallInsight{
-			ID:                  fmt.Sprintf("BATCH-%s-%d", s.ID, time.Now().UnixNano()),
-			SellerID:            s.ID,
-			Date:                time.Now().Format("2006-01-02"),
-			Agent:               "Nightly-Batch",
-			Sentiment:           result.CallInsight.Sentiment,
-			Summary:             result.CallInsight.Summary,
-			Issues:              result.CallInsight.Issues,
-			Quote:               result.CallInsight.Quote,
-			Disposition:         result.CallInsight.Disposition,
-			CompetitorMentioned: result.CallInsight.CompetitorMentioned,
-			CommitmentByExec:    result.CallInsight.CommitmentByExec,
-			Source:              "BATCH",
-		}
-		store.SaveCallInsight(insight)
-		log.Printf("[batch] %s: insight extracted (sentiment: %s) + guide generated (%d sections)",
-			s.ID, insight.Sentiment, len(result.RetentionGuide))
-		guide = result.RetentionGuide
+	if ar, agentErr := callPythonAgent(enriched, mlServiceURL); agentErr == nil {
+		cause = ar.ChurnCause
+		causeReason = ar.CauseReason
+		mlProb = ar.ChurnProb
+		mlTopFeatures = ar.TopFeatures
+		guide = ar.Guide
+		log.Printf("[batch] %s: agent cause=%s guide=%d sections", s.ID, cause, len(guide))
 	} else {
-		var err error
-		guide, err = llm.RetentionGuide(enriched, pb, mlProb)
-		if err != nil {
-			return 1, fmt.Errorf("guide generation: %w", err)
+		log.Printf("[batch] %s: python agent unavailable (%v) — falling back to Go LLM", s.ID, agentErr)
+		// Fallback: transcript-aware combined call or guide-only, same as before.
+		if len(transcripts) > 0 {
+			result, err := llm.ProcessSellerBatch(enriched, transcripts, pb, mlProb)
+			if err != nil {
+				return 1, fmt.Errorf("combined batch call: %w", err)
+			}
+			insight := models.CallInsight{
+				ID:                  fmt.Sprintf("BATCH-%s-%d", s.ID, time.Now().UnixNano()),
+				SellerID:            s.ID,
+				Date:                time.Now().Format("2006-01-02"),
+				Agent:               "Nightly-Batch",
+				Sentiment:           result.CallInsight.Sentiment,
+				Summary:             result.CallInsight.Summary,
+				Issues:              result.CallInsight.Issues,
+				Quote:               result.CallInsight.Quote,
+				Disposition:         result.CallInsight.Disposition,
+				CompetitorMentioned: result.CallInsight.CompetitorMentioned,
+				CommitmentByExec:    result.CallInsight.CommitmentByExec,
+				Source:              "BATCH",
+			}
+			store.SaveCallInsight(insight)
+			log.Printf("[batch] %s: fallback insight extracted (sentiment: %s) + guide (%d sections)",
+				s.ID, insight.Sentiment, len(result.RetentionGuide))
+			guide = result.RetentionGuide
+		} else {
+			var err error
+			guide, err = llm.RetentionGuide(enriched, pb, mlProb)
+			if err != nil {
+				return 1, fmt.Errorf("guide generation: %w", err)
+			}
+			log.Printf("[batch] %s: fallback guide generated (%d sections)", s.ID, len(guide))
 		}
-		log.Printf("[batch] %s: guide generated (%d sections, no new transcript)", s.ID, len(guide))
 	}
 
 	// Step 7: persist computed state + guide to DB.
@@ -181,6 +190,37 @@ func processSeller(s models.Seller, transcripts []string, store *outcome.Store, 
 
 	log.Printf("[batch] %s: done", s.ID)
 	return 1, nil
+}
+
+// ─── Python agent helper ──────────────────────────────────────────────────────
+
+type agentResult struct {
+	ChurnCause  string           `json:"churnCause"`
+	CauseReason string           `json:"causeReason"`
+	ChurnProb   float64          `json:"churnProb"`
+	TopFeatures []string         `json:"topFeatures"`
+	Guide       []llm.GuideSection `json:"guide"`
+}
+
+// callPythonAgent sends the full seller to the LangGraph agent endpoint and returns
+// the classified cause, reason, guide, and updated ML probability.
+// Returns an error if the agent service is unavailable — caller should fall back to Go LLM.
+func callPythonAgent(s models.Seller, mlServiceURL string) (*agentResult, error) {
+	payload, _ := json.Marshal(map[string]any{"seller": s})
+	resp, err := http.Post(mlServiceURL+"/agent/analyze", "application/json", bytes.NewReader(payload))
+	if err != nil {
+		return nil, fmt.Errorf("agent request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("agent %d: %s", resp.StatusCode, body)
+	}
+	var ar agentResult
+	if err := json.NewDecoder(resp.Body).Decode(&ar); err != nil {
+		return nil, fmt.Errorf("agent decode: %w", err)
+	}
+	return &ar, nil
 }
 
 // ─── ML helpers ──────────────────────────────────────────────────────────────

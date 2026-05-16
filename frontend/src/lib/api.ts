@@ -166,3 +166,55 @@ export function fetchMLStats(): Promise<MLStats> {
 export function triggerRetraining(): Promise<{ auc: number; previousAuc: number; swapped: boolean; trainingExamples: number }> {
   return post("/ml/train");
 }
+
+// ─── Live agent ───────────────────────────────────────────────────────────────
+
+export type AgentStepEvent =
+  | { step: "xgboost";  label: string; churnProb: number; topFeatures: string[] }
+  | { step: "classify"; label: string; churnCause: string; causeReason: string; riskScore: number }
+  | { step: "guide";    label: string; guide: { title: string; pitch: string; actions: string[] }[] }
+  | { step: "done";     label: string };
+
+/**
+ * Opens a streaming connection to the LangGraph agent for a seller.
+ * Calls onStep for each node that completes; calls onDone when the agent finishes.
+ * Returns a cleanup function that aborts the stream.
+ */
+export function agentStream(
+  sellerId: string,
+  onStep: (event: AgentStepEvent) => void,
+  onError: (err: string) => void,
+  onDone: () => void,
+): () => void {
+  const controller = new AbortController();
+
+  fetch(`${BASE}/sellers/${sellerId}/agent`, { signal: controller.signal })
+    .then(async (r) => {
+      if (!r.ok) throw new Error(`Agent ${r.status}`);
+      const reader = r.body!.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(line.slice(6)) as AgentStepEvent;
+            if (event.step === "done") onDone();
+            else onStep(event);
+          } catch { /* malformed line — skip */ }
+        }
+      }
+      onDone();
+    })
+    .catch((err) => {
+      if (err.name !== "AbortError") onError(String(err));
+    });
+
+  return () => controller.abort();
+}

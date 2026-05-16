@@ -8,7 +8,7 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { PanelLeft, Settings, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { PanelLeft, Settings, Sparkles, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import { fetchSellers } from "@/lib/api";
 import { riskBand, type Seller } from "@/lib/mock-sellers";
 
@@ -170,7 +170,7 @@ function AppSidebar({ onCollapse }: { onCollapse: () => void }) {
 
   const churnCount = sellers.filter((s) => s.churnCause !== "PLATFORM_FAILURE").length;
   const platformCount = sellers.filter((s) => s.churnCause === "PLATFORM_FAILURE").length;
-  const upsellCount = sellers.filter((s) => s.riskScore < 55 && s.packageType !== "Star" && s.churnCause !== "PLATFORM_FAILURE").length;
+  const upsellCount = sellers.filter((s) => s.riskScore < 55 && s.packageType !== "Maximiser" && s.churnCause !== "PLATFORM_FAILURE").length;
 
   return (
     <aside className="w-[220px] shrink-0 bg-zinc-950 flex flex-col overflow-y-auto border-r border-zinc-800">
@@ -247,6 +247,17 @@ function AppSidebar({ onCollapse }: { onCollapse: () => void }) {
               <Sparkles className={`h-4 w-4 shrink-0 transition-colors ${location.pathname === "/showcase" ? "text-white" : "text-zinc-500 group-hover:text-zinc-300"}`} />
               <span className="flex-1 truncate">Showcase</span>
             </Link>
+            <Link
+              to="/demo"
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150 group ${
+                location.pathname === "/demo"
+                  ? "bg-primary/20 text-primary"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Zap className={`h-4 w-4 shrink-0 transition-colors ${location.pathname === "/demo" ? "text-primary" : "text-zinc-500 group-hover:text-zinc-300"}`} />
+              <span className="flex-1 truncate">Live Demo</span>
+            </Link>
           </div>
         </div>
       </nav>
@@ -272,7 +283,7 @@ function AppSidebar({ onCollapse }: { onCollapse: () => void }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isShowcase = pathname === "/showcase";
+  const isShowcase = pathname === "/showcase" || pathname === "/demo";
   // Sidebar hidden — set to true to restore
   const [sidebarOpen] = useState(false);
 
