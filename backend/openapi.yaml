@@ -375,6 +375,47 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MetricHistory'
+        blni:
+          type: array
+          description: Buy Lead Not Interested % per month (blni_count / bl_cons * 100)
+          items:
+            $ref: '#/components/schemas/MetricHistory'
+        blActiveDays:
+          type: array
+          description: Days per month the seller consumed at least one buy lead
+          items:
+            $ref: '#/components/schemas/MetricHistory'
+
+    LeadsMonthData:
+      type: object
+      properties:
+        month:
+          type: string
+          example: May 2026
+        blConsumed:
+          type: integer
+          description: Buy leads actually consumed this month
+          example: 10
+        totalEnq:
+          type: integer
+          description: Total buyer enquiries received
+          example: 22
+        cons0to4hrs:
+          type: integer
+          description: Leads consumed within 0–4 hours of approval
+          example: 1
+        cons4to24hrs:
+          type: integer
+          description: Leads consumed 4–24 hours after approval
+          example: 5
+        consGt1day:
+          type: integer
+          description: Leads consumed more than 1 day after approval
+          example: 4
+        blLapsed:
+          type: integer
+          description: Buy lead credits that lapsed unused
+          example: 18
 
     CallInsight:
       type: object
@@ -479,6 +520,11 @@ components:
             type: string
         metrics:
           $ref: '#/components/schemas/SellerMetrics'
+        leadsHistory:
+          type: array
+          description: 6-month IndiaMART lead volume and consumption data
+          items:
+            $ref: '#/components/schemas/LeadsMonthData'
         callInsights:
           type: array
           items:

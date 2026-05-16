@@ -5,7 +5,9 @@
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(s['id'], s['name']\\) for s in d[:5]]\")",
       "Bash(docker compose *)",
       "Bash(curl -s --max-time 10 http://localhost:5173)",
-      "Bash(curl -s --max-time 10 -A \"Mozilla/5.0\" http://localhost:5173)"
+      "Bash(curl -s --max-time 10 -A \"Mozilla/5.0\" http://localhost:5173)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\imart\\\\Downloads\\\\Seller Retention Guardian\" -Force)",
+      "Bash(Select-Object Name, Mode)"
     ]
   }
 }

@@ -10,105 +10,24 @@
     "status": "Pending",
     "priorChurn": true,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 38
-        },
-        {
-          "month": "Apr",
-          "value": 28
-        },
-        {
-          "month": "May",
-          "value": 23
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 28
-        },
-        {
-          "month": "Apr",
-          "value": 18
-        },
-        {
-          "month": "May",
-          "value": 12
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 42
-        },
-        {
-          "month": "Apr",
-          "value": 29
-        },
-        {
-          "month": "May",
-          "value": 21
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 28
-        },
-        {
-          "month": "Apr",
-          "value": 24
-        },
-        {
-          "month": "May",
-          "value": 12
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 40
-        },
-        {
-          "month": "Apr",
-          "value": 38
-        },
-        {
-          "month": "May",
-          "value": 44
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 33
-        },
-        {
-          "month": "Apr",
-          "value": 33
-        },
-        {
-          "month": "May",
-          "value": 35
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 32
-        },
-        {
-          "month": "Apr",
-          "value": 31
-        },
-        {
-          "month": "May",
-          "value": 30
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":38},{"month":"Apr","value":28},{"month":"May","value":23}],
+      "blConsumptionPct": [{"month":"Mar","value":28},{"month":"Apr","value":18},{"month":"May","value":12}],
+      "pnsPickupRatePct": [{"month":"Mar","value":42},{"month":"Apr","value":29},{"month":"May","value":21}],
+      "lmsReplyRatePct": [{"month":"Mar","value":28},{"month":"Apr","value":24},{"month":"May","value":12}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":40},{"month":"Apr","value":38},{"month":"May","value":44}],
+      "catalogScore": [{"month":"Mar","value":33},{"month":"Apr","value":33},{"month":"May","value":35}],
+      "cqs": [{"month":"Mar","value":32},{"month":"Apr","value":31},{"month":"May","value":30}],
+      "blni": [{"month":"Mar","value":22},{"month":"Apr","value":28},{"month":"May","value":32}],
+      "blActiveDays": [{"month":"Mar","value":7},{"month":"Apr","value":4},{"month":"May","value":3}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":16,"totalEnq":22,"cons0to4hrs":9,"cons4to24hrs":5,"consGt1day":2,"blLapsed":4},
+      {"month":"Jan 2026","blConsumed":14,"totalEnq":20,"cons0to4hrs":7,"cons4to24hrs":5,"consGt1day":2,"blLapsed":6},
+      {"month":"Feb 2026","blConsumed":12,"totalEnq":18,"cons0to4hrs":6,"cons4to24hrs":4,"consGt1day":2,"blLapsed":8},
+      {"month":"Mar 2026","blConsumed":10,"totalEnq":16,"cons0to4hrs":4,"cons4to24hrs":4,"consGt1day":2,"blLapsed":10},
+      {"month":"Apr 2026","blConsumed":7,"totalEnq":12,"cons0to4hrs":2,"cons4to24hrs":3,"consGt1day":2,"blLapsed":13},
+      {"month":"May 2026","blConsumed":5,"totalEnq":9,"cons0to4hrs":1,"cons4to24hrs":2,"consGt1day":2,"blLapsed":15}
+    ],
     "callInsights": []
   },
   {
@@ -122,105 +41,24 @@
     "status": "Pending",
     "priorChurn": true,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 41
-        },
-        {
-          "month": "Apr",
-          "value": 32
-        },
-        {
-          "month": "May",
-          "value": 23
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 34
-        },
-        {
-          "month": "Apr",
-          "value": 24
-        },
-        {
-          "month": "May",
-          "value": 12
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 55
-        },
-        {
-          "month": "Apr",
-          "value": 40
-        },
-        {
-          "month": "May",
-          "value": 25
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 37
-        },
-        {
-          "month": "Apr",
-          "value": 26
-        },
-        {
-          "month": "May",
-          "value": 14
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 31
-        },
-        {
-          "month": "Apr",
-          "value": 31
-        },
-        {
-          "month": "May",
-          "value": 31
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 40
-        },
-        {
-          "month": "Apr",
-          "value": 44
-        },
-        {
-          "month": "May",
-          "value": 47
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 33
-        },
-        {
-          "month": "Apr",
-          "value": 41
-        },
-        {
-          "month": "May",
-          "value": 44
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":41},{"month":"Apr","value":32},{"month":"May","value":23}],
+      "blConsumptionPct": [{"month":"Mar","value":34},{"month":"Apr","value":24},{"month":"May","value":12}],
+      "pnsPickupRatePct": [{"month":"Mar","value":55},{"month":"Apr","value":40},{"month":"May","value":25}],
+      "lmsReplyRatePct": [{"month":"Mar","value":37},{"month":"Apr","value":26},{"month":"May","value":14}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":31},{"month":"Apr","value":31},{"month":"May","value":31}],
+      "catalogScore": [{"month":"Mar","value":40},{"month":"Apr","value":44},{"month":"May","value":47}],
+      "cqs": [{"month":"Mar","value":33},{"month":"Apr","value":41},{"month":"May","value":44}],
+      "blni": [{"month":"Mar","value":20},{"month":"Apr","value":24},{"month":"May","value":26}],
+      "blActiveDays": [{"month":"Mar","value":6},{"month":"Apr","value":3},{"month":"May","value":3}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":15,"totalEnq":20,"cons0to4hrs":8,"cons4to24hrs":5,"consGt1day":2,"blLapsed":5},
+      {"month":"Jan 2026","blConsumed":13,"totalEnq":19,"cons0to4hrs":6,"cons4to24hrs":5,"consGt1day":2,"blLapsed":7},
+      {"month":"Feb 2026","blConsumed":11,"totalEnq":17,"cons0to4hrs":5,"cons4to24hrs":4,"consGt1day":2,"blLapsed":9},
+      {"month":"Mar 2026","blConsumed":9,"totalEnq":15,"cons0to4hrs":4,"cons4to24hrs":3,"consGt1day":2,"blLapsed":11},
+      {"month":"Apr 2026","blConsumed":7,"totalEnq":12,"cons0to4hrs":2,"cons4to24hrs":3,"consGt1day":2,"blLapsed":13},
+      {"month":"May 2026","blConsumed":5,"totalEnq":9,"cons0to4hrs":1,"cons4to24hrs":2,"consGt1day":2,"blLapsed":15}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -229,12 +67,8 @@
         "durationMin": 9,
         "agent": "Anita R.",
         "sentiment": "Negative",
-        "summary": "Seller frustrated \u00e2\u20ac\u201d not getting any buyer enquiries despite 2 months on platform.",
-        "issues": [
-          "No buyer enquiries",
-          "Catalog visibility concern",
-          "ROI disappointment"
-        ],
+        "summary": "Seller frustrated — not getting any buyer enquiries despite 2 months on platform.",
+        "issues": ["No buyer enquiries","Catalog visibility concern","ROI disappointment"],
         "quote": "I paid for MDC but haven't got a single order. What am I paying for?",
         "disposition": "Hostile",
         "competitorMentioned": "",
@@ -254,105 +88,24 @@
     "status": "Pending",
     "priorChurn": true,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 56
-        },
-        {
-          "month": "Apr",
-          "value": 49
-        },
-        {
-          "month": "May",
-          "value": 39
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 47
-        },
-        {
-          "month": "Apr",
-          "value": 36
-        },
-        {
-          "month": "May",
-          "value": 26
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 56
-        },
-        {
-          "month": "Apr",
-          "value": 46
-        },
-        {
-          "month": "May",
-          "value": 37
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 50
-        },
-        {
-          "month": "Apr",
-          "value": 42
-        },
-        {
-          "month": "May",
-          "value": 32
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 58
-        },
-        {
-          "month": "Apr",
-          "value": 61
-        },
-        {
-          "month": "May",
-          "value": 61
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 47
-        },
-        {
-          "month": "Apr",
-          "value": 48
-        },
-        {
-          "month": "May",
-          "value": 50
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 44
-        },
-        {
-          "month": "Apr",
-          "value": 48
-        },
-        {
-          "month": "May",
-          "value": 47
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":56},{"month":"Apr","value":49},{"month":"May","value":39}],
+      "blConsumptionPct": [{"month":"Mar","value":47},{"month":"Apr","value":36},{"month":"May","value":26}],
+      "pnsPickupRatePct": [{"month":"Mar","value":56},{"month":"Apr","value":46},{"month":"May","value":37}],
+      "lmsReplyRatePct": [{"month":"Mar","value":50},{"month":"Apr","value":42},{"month":"May","value":32}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":58},{"month":"Apr","value":61},{"month":"May","value":61}],
+      "catalogScore": [{"month":"Mar","value":47},{"month":"Apr","value":48},{"month":"May","value":50}],
+      "cqs": [{"month":"Mar","value":44},{"month":"Apr","value":48},{"month":"May","value":47}],
+      "blni": [{"month":"Mar","value":15},{"month":"Apr","value":18},{"month":"May","value":22}],
+      "blActiveDays": [{"month":"Mar","value":12},{"month":"Apr","value":9},{"month":"May","value":7}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":24,"totalEnq":30,"cons0to4hrs":12,"cons4to24hrs":8,"consGt1day":4,"blLapsed":6},
+      {"month":"Jan 2026","blConsumed":22,"totalEnq":27,"cons0to4hrs":10,"cons4to24hrs":8,"consGt1day":4,"blLapsed":8},
+      {"month":"Feb 2026","blConsumed":20,"totalEnq":24,"cons0to4hrs":9,"cons4to24hrs":7,"consGt1day":4,"blLapsed":10},
+      {"month":"Mar 2026","blConsumed":18,"totalEnq":22,"cons0to4hrs":8,"cons4to24hrs":6,"consGt1day":4,"blLapsed":12},
+      {"month":"Apr 2026","blConsumed":15,"totalEnq":20,"cons0to4hrs":6,"cons4to24hrs":6,"consGt1day":3,"blLapsed":15},
+      {"month":"May 2026","blConsumed":12,"totalEnq":18,"cons0to4hrs":4,"cons4to24hrs":5,"consGt1day":3,"blLapsed":18}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -362,11 +115,7 @@
         "agent": "Rahul S.",
         "sentiment": "Negative",
         "summary": "Platform sending retail buyers to a raw-material wholesaler. BL filters not working as configured.",
-        "issues": [
-          "BL filters not working",
-          "Lead quality dropped",
-          "Catalog edits rejected"
-        ],
+        "issues": ["BL filters not working","Lead quality dropped","Catalog edits rejected"],
         "quote": "I sell in tonnes to factories. Why am I getting calls from small shops?",
         "disposition": "Skeptical",
         "competitorMentioned": "",
@@ -380,10 +129,8 @@
         "durationMin": 8,
         "agent": "Rahul S.",
         "sentiment": "Negative",
-        "summary": "Follow-up on BL filter issue \u00e2\u20ac\u201d not yet resolved. Seller growing impatient.",
-        "issues": [
-          "BL filters not working"
-        ],
+        "summary": "Follow-up on BL filter issue — not yet resolved. Seller growing impatient.",
+        "issues": ["BL filters not working"],
         "quote": "",
         "disposition": "Hostile",
         "competitorMentioned": "",
@@ -403,105 +150,24 @@
     "status": "Pending",
     "priorChurn": true,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 49
-        },
-        {
-          "month": "Apr",
-          "value": 37
-        },
-        {
-          "month": "May",
-          "value": 26
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 36
-        },
-        {
-          "month": "Apr",
-          "value": 23
-        },
-        {
-          "month": "May",
-          "value": 14
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 47
-        },
-        {
-          "month": "Apr",
-          "value": 36
-        },
-        {
-          "month": "May",
-          "value": 26
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 40
-        },
-        {
-          "month": "Apr",
-          "value": 29
-        },
-        {
-          "month": "May",
-          "value": 24
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 35
-        },
-        {
-          "month": "Apr",
-          "value": 34
-        },
-        {
-          "month": "May",
-          "value": 38
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 35
-        },
-        {
-          "month": "Apr",
-          "value": 40
-        },
-        {
-          "month": "May",
-          "value": 39
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 32
-        },
-        {
-          "month": "Apr",
-          "value": 33
-        },
-        {
-          "month": "May",
-          "value": 36
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":49},{"month":"Apr","value":37},{"month":"May","value":26}],
+      "blConsumptionPct": [{"month":"Mar","value":36},{"month":"Apr","value":23},{"month":"May","value":14}],
+      "pnsPickupRatePct": [{"month":"Mar","value":47},{"month":"Apr","value":36},{"month":"May","value":26}],
+      "lmsReplyRatePct": [{"month":"Mar","value":40},{"month":"Apr","value":29},{"month":"May","value":24}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":35},{"month":"Apr","value":34},{"month":"May","value":38}],
+      "catalogScore": [{"month":"Mar","value":35},{"month":"Apr","value":40},{"month":"May","value":39}],
+      "cqs": [{"month":"Mar","value":32},{"month":"Apr","value":33},{"month":"May","value":36}],
+      "blni": [{"month":"Mar","value":25},{"month":"Apr","value":30},{"month":"May","value":28}],
+      "blActiveDays": [{"month":"Mar","value":8},{"month":"Apr","value":5},{"month":"May","value":4}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":14,"totalEnq":20,"cons0to4hrs":7,"cons4to24hrs":5,"consGt1day":2,"blLapsed":6},
+      {"month":"Jan 2026","blConsumed":12,"totalEnq":18,"cons0to4hrs":6,"cons4to24hrs":4,"consGt1day":2,"blLapsed":8},
+      {"month":"Feb 2026","blConsumed":10,"totalEnq":15,"cons0to4hrs":5,"cons4to24hrs":3,"consGt1day":2,"blLapsed":10},
+      {"month":"Mar 2026","blConsumed":9,"totalEnq":14,"cons0to4hrs":4,"cons4to24hrs":3,"consGt1day":2,"blLapsed":11},
+      {"month":"Apr 2026","blConsumed":7,"totalEnq":11,"cons0to4hrs":2,"cons4to24hrs":3,"consGt1day":2,"blLapsed":13},
+      {"month":"May 2026","blConsumed":5,"totalEnq":8,"cons0to4hrs":1,"cons4to24hrs":2,"consGt1day":2,"blLapsed":15}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -511,11 +177,7 @@
         "agent": "Priya D.",
         "sentiment": "Negative",
         "summary": "Seller evaluating IndiaTrade offer. Feels IndiaMART not delivering ROI at current price.",
-        "issues": [
-          "Competitor offer received",
-          "Pricing vs ROI",
-          "Low enquiry volume"
-        ],
+        "issues": ["Competitor offer received","Pricing vs ROI","Low enquiry volume"],
         "quote": "IndiaTrade is giving me a 3-month trial free. Why would I renew here?",
         "disposition": "Hostile",
         "competitorMentioned": "IndiaTrade",
@@ -535,105 +197,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 77
-        },
-        {
-          "month": "Apr",
-          "value": 63
-        },
-        {
-          "month": "May",
-          "value": 51
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 84
-        },
-        {
-          "month": "Apr",
-          "value": 64
-        },
-        {
-          "month": "May",
-          "value": 45
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 74
-        },
-        {
-          "month": "Apr",
-          "value": 62
-        },
-        {
-          "month": "May",
-          "value": 45
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 66
-        },
-        {
-          "month": "Apr",
-          "value": 44
-        },
-        {
-          "month": "May",
-          "value": 29
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 38
-        },
-        {
-          "month": "Apr",
-          "value": 45
-        },
-        {
-          "month": "May",
-          "value": 45
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 73
-        },
-        {
-          "month": "Apr",
-          "value": 62
-        },
-        {
-          "month": "May",
-          "value": 52
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 67
-        },
-        {
-          "month": "Apr",
-          "value": 58
-        },
-        {
-          "month": "May",
-          "value": 52
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":77},{"month":"Apr","value":63},{"month":"May","value":51}],
+      "blConsumptionPct": [{"month":"Mar","value":84},{"month":"Apr","value":64},{"month":"May","value":45}],
+      "pnsPickupRatePct": [{"month":"Mar","value":74},{"month":"Apr","value":62},{"month":"May","value":45}],
+      "lmsReplyRatePct": [{"month":"Mar","value":66},{"month":"Apr","value":44},{"month":"May","value":29}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":38},{"month":"Apr","value":45},{"month":"May","value":45}],
+      "catalogScore": [{"month":"Mar","value":73},{"month":"Apr","value":62},{"month":"May","value":52}],
+      "cqs": [{"month":"Mar","value":67},{"month":"Apr","value":58},{"month":"May","value":52}],
+      "blni": [{"month":"Mar","value":12},{"month":"Apr","value":14},{"month":"May","value":18}],
+      "blActiveDays": [{"month":"Mar","value":15},{"month":"Apr","value":12},{"month":"May","value":10}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":68,"totalEnq":95,"cons0to4hrs":35,"cons4to24hrs":22,"consGt1day":11,"blLapsed":12},
+      {"month":"Jan 2026","blConsumed":64,"totalEnq":88,"cons0to4hrs":33,"cons4to24hrs":20,"consGt1day":11,"blLapsed":16},
+      {"month":"Feb 2026","blConsumed":58,"totalEnq":82,"cons0to4hrs":30,"cons4to24hrs":18,"consGt1day":10,"blLapsed":22},
+      {"month":"Mar 2026","blConsumed":50,"totalEnq":75,"cons0to4hrs":24,"cons4to24hrs":17,"consGt1day":9,"blLapsed":30},
+      {"month":"Apr 2026","blConsumed":42,"totalEnq":65,"cons0to4hrs":18,"cons4to24hrs":15,"consGt1day":9,"blLapsed":38},
+      {"month":"May 2026","blConsumed":35,"totalEnq":55,"cons0to4hrs":13,"cons4to24hrs":13,"consGt1day":9,"blLapsed":45}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -643,11 +224,7 @@
         "agent": "Anita R.",
         "sentiment": "Negative",
         "summary": "Seller frustrated with poor lead quality and unanswered support tickets.",
-        "issues": [
-          "Lead quality dropped",
-          "Support response slow",
-          "Considering competitor"
-        ],
+        "issues": ["Lead quality dropped","Support response slow","Considering competitor"],
         "quote": "I'm paying IM Star money but most leads are retail buyers wasting my time.",
         "disposition": "Skeptical",
         "competitorMentioned": "",
@@ -662,9 +239,7 @@
         "agent": "Vikas K.",
         "sentiment": "Neutral",
         "summary": "Discussed BL filter tuning. Seller agreed to try but skeptical.",
-        "issues": [
-          "BL filters not working"
-        ],
+        "issues": ["BL filters not working"],
         "quote": "",
         "disposition": "Skeptical",
         "competitorMentioned": "",
@@ -684,105 +259,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 46
-        },
-        {
-          "month": "Apr",
-          "value": 33
-        },
-        {
-          "month": "May",
-          "value": 24
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 51
-        },
-        {
-          "month": "Apr",
-          "value": 33
-        },
-        {
-          "month": "May",
-          "value": 23
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 40
-        },
-        {
-          "month": "Apr",
-          "value": 32
-        },
-        {
-          "month": "May",
-          "value": 21
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 33
-        },
-        {
-          "month": "Apr",
-          "value": 25
-        },
-        {
-          "month": "May",
-          "value": 15
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 58
-        },
-        {
-          "month": "Apr",
-          "value": 66
-        },
-        {
-          "month": "May",
-          "value": 70
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 58
-        },
-        {
-          "month": "Apr",
-          "value": 50
-        },
-        {
-          "month": "May",
-          "value": 45
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 53
-        },
-        {
-          "month": "Apr",
-          "value": 49
-        },
-        {
-          "month": "May",
-          "value": 41
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":46},{"month":"Apr","value":33},{"month":"May","value":24}],
+      "blConsumptionPct": [{"month":"Mar","value":51},{"month":"Apr","value":33},{"month":"May","value":23}],
+      "pnsPickupRatePct": [{"month":"Mar","value":40},{"month":"Apr","value":32},{"month":"May","value":21}],
+      "lmsReplyRatePct": [{"month":"Mar","value":33},{"month":"Apr","value":25},{"month":"May","value":15}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":58},{"month":"Apr","value":66},{"month":"May","value":70}],
+      "catalogScore": [{"month":"Mar","value":58},{"month":"Apr","value":50},{"month":"May","value":45}],
+      "cqs": [{"month":"Mar","value":53},{"month":"Apr","value":49},{"month":"May","value":41}],
+      "blni": [{"month":"Mar","value":20},{"month":"Apr","value":25},{"month":"May","value":30}],
+      "blActiveDays": [{"month":"Mar","value":10},{"month":"Apr","value":6},{"month":"May","value":4}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":38,"totalEnq":48,"cons0to4hrs":20,"cons4to24hrs":12,"consGt1day":6,"blLapsed":12},
+      {"month":"Jan 2026","blConsumed":34,"totalEnq":44,"cons0to4hrs":17,"cons4to24hrs":11,"consGt1day":6,"blLapsed":16},
+      {"month":"Feb 2026","blConsumed":30,"totalEnq":40,"cons0to4hrs":14,"cons4to24hrs":10,"consGt1day":6,"blLapsed":20},
+      {"month":"Mar 2026","blConsumed":25,"totalEnq":35,"cons0to4hrs":11,"cons4to24hrs":8,"consGt1day":6,"blLapsed":25},
+      {"month":"Apr 2026","blConsumed":20,"totalEnq":28,"cons0to4hrs":7,"cons4to24hrs":7,"consGt1day":6,"blLapsed":30},
+      {"month":"May 2026","blConsumed":15,"totalEnq":22,"cons0to4hrs":4,"cons4to24hrs":6,"consGt1day":5,"blLapsed":35}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -792,10 +286,7 @@
         "agent": "Anita R.",
         "sentiment": "Negative",
         "summary": "Seller says enquiries dropped sharply. Blames algorithm changes for poor BL relevance.",
-        "issues": [
-          "Drop in enquiries",
-          "Catalog visibility concern"
-        ],
+        "issues": ["Drop in enquiries","Catalog visibility concern"],
         "quote": "Last 2 months I'm getting half the calls I used to get.",
         "disposition": "Skeptical",
         "competitorMentioned": "",
@@ -815,105 +306,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 34
-        },
-        {
-          "month": "Apr",
-          "value": 24
-        },
-        {
-          "month": "May",
-          "value": 10
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 40
-        },
-        {
-          "month": "Apr",
-          "value": 20
-        },
-        {
-          "month": "May",
-          "value": 6
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 28
-        },
-        {
-          "month": "Apr",
-          "value": 19
-        },
-        {
-          "month": "May",
-          "value": 9
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 26
-        },
-        {
-          "month": "Apr",
-          "value": 16
-        },
-        {
-          "month": "May",
-          "value": 7
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 69
-        },
-        {
-          "month": "Apr",
-          "value": 74
-        },
-        {
-          "month": "May",
-          "value": 83
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 46
-        },
-        {
-          "month": "Apr",
-          "value": 36
-        },
-        {
-          "month": "May",
-          "value": 24
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 44
-        },
-        {
-          "month": "Apr",
-          "value": 29
-        },
-        {
-          "month": "May",
-          "value": 24
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":34},{"month":"Apr","value":24},{"month":"May","value":10}],
+      "blConsumptionPct": [{"month":"Mar","value":40},{"month":"Apr","value":20},{"month":"May","value":6}],
+      "pnsPickupRatePct": [{"month":"Mar","value":28},{"month":"Apr","value":19},{"month":"May","value":9}],
+      "lmsReplyRatePct": [{"month":"Mar","value":26},{"month":"Apr","value":16},{"month":"May","value":7}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":69},{"month":"Apr","value":74},{"month":"May","value":83}],
+      "catalogScore": [{"month":"Mar","value":46},{"month":"Apr","value":36},{"month":"May","value":24}],
+      "cqs": [{"month":"Mar","value":44},{"month":"Apr","value":29},{"month":"May","value":24}],
+      "blni": [{"month":"Mar","value":30},{"month":"Apr","value":38},{"month":"May","value":45}],
+      "blActiveDays": [{"month":"Mar","value":5},{"month":"Apr","value":3},{"month":"May","value":2}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":30,"totalEnq":42,"cons0to4hrs":15,"cons4to24hrs":10,"consGt1day":5,"blLapsed":20},
+      {"month":"Jan 2026","blConsumed":24,"totalEnq":36,"cons0to4hrs":11,"cons4to24hrs":8,"consGt1day":5,"blLapsed":26},
+      {"month":"Feb 2026","blConsumed":18,"totalEnq":29,"cons0to4hrs":8,"cons4to24hrs":6,"consGt1day":4,"blLapsed":32},
+      {"month":"Mar 2026","blConsumed":12,"totalEnq":22,"cons0to4hrs":5,"cons4to24hrs":4,"consGt1day":3,"blLapsed":38},
+      {"month":"Apr 2026","blConsumed":7,"totalEnq":15,"cons0to4hrs":2,"cons4to24hrs":3,"consGt1day":2,"blLapsed":43},
+      {"month":"May 2026","blConsumed":3,"totalEnq":8,"cons0to4hrs":0,"cons4to24hrs":1,"consGt1day":2,"blLapsed":47}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -923,11 +333,7 @@
         "agent": "Priya D.",
         "sentiment": "Negative",
         "summary": "Seller threatening to switch to TradeIndia. Multiple complaints unresolved.",
-        "issues": [
-          "Competitor offer received",
-          "Buyer disputes unhandled",
-          "Catalog edits rejected"
-        ],
+        "issues": ["Competitor offer received","Buyer disputes unhandled","Catalog edits rejected"],
         "quote": "TradeIndia is offering me same package at 30% less. Why should I stay?",
         "disposition": "Hostile",
         "competitorMentioned": "TradeIndia",
@@ -941,10 +347,8 @@
         "durationMin": 7,
         "agent": "Priya D.",
         "sentiment": "Negative",
-        "summary": "Seller upset about PNS missed calls \u00e2\u20ac\u201d wants better call routing.",
-        "issues": [
-          "PNS routing"
-        ],
+        "summary": "Seller upset about PNS missed calls — wants better call routing.",
+        "issues": ["PNS routing"],
         "quote": "",
         "disposition": "Skeptical",
         "competitorMentioned": "",
@@ -964,105 +368,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 54
-        },
-        {
-          "month": "Apr",
-          "value": 46
-        },
-        {
-          "month": "May",
-          "value": 36
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 61
-        },
-        {
-          "month": "Apr",
-          "value": 48
-        },
-        {
-          "month": "May",
-          "value": 38
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 45
-        },
-        {
-          "month": "Apr",
-          "value": 39
-        },
-        {
-          "month": "May",
-          "value": 34
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 38
-        },
-        {
-          "month": "Apr",
-          "value": 31
-        },
-        {
-          "month": "May",
-          "value": 20
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 54
-        },
-        {
-          "month": "Apr",
-          "value": 60
-        },
-        {
-          "month": "May",
-          "value": 61
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 55
-        },
-        {
-          "month": "Apr",
-          "value": 50
-        },
-        {
-          "month": "May",
-          "value": 48
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 55
-        },
-        {
-          "month": "Apr",
-          "value": 46
-        },
-        {
-          "month": "May",
-          "value": 41
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":54},{"month":"Apr","value":46},{"month":"May","value":36}],
+      "blConsumptionPct": [{"month":"Mar","value":61},{"month":"Apr","value":48},{"month":"May","value":38}],
+      "pnsPickupRatePct": [{"month":"Mar","value":45},{"month":"Apr","value":39},{"month":"May","value":34}],
+      "lmsReplyRatePct": [{"month":"Mar","value":38},{"month":"Apr","value":31},{"month":"May","value":20}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":54},{"month":"Apr","value":60},{"month":"May","value":61}],
+      "catalogScore": [{"month":"Mar","value":55},{"month":"Apr","value":50},{"month":"May","value":48}],
+      "cqs": [{"month":"Mar","value":55},{"month":"Apr","value":46},{"month":"May","value":41}],
+      "blni": [{"month":"Mar","value":15},{"month":"Apr","value":16},{"month":"May","value":18}],
+      "blActiveDays": [{"month":"Mar","value":14},{"month":"Apr","value":11},{"month":"May","value":9}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":44,"totalEnq":58,"cons0to4hrs":22,"cons4to24hrs":14,"consGt1day":8,"blLapsed":6},
+      {"month":"Jan 2026","blConsumed":42,"totalEnq":54,"cons0to4hrs":21,"cons4to24hrs":13,"consGt1day":8,"blLapsed":8},
+      {"month":"Feb 2026","blConsumed":38,"totalEnq":50,"cons0to4hrs":19,"cons4to24hrs":12,"consGt1day":7,"blLapsed":12},
+      {"month":"Mar 2026","blConsumed":35,"totalEnq":46,"cons0to4hrs":17,"cons4to24hrs":11,"consGt1day":7,"blLapsed":15},
+      {"month":"Apr 2026","blConsumed":30,"totalEnq":40,"cons0to4hrs":14,"cons4to24hrs":10,"consGt1day":6,"blLapsed":20},
+      {"month":"May 2026","blConsumed":25,"totalEnq":33,"cons0to4hrs":10,"cons4to24hrs":9,"consGt1day":6,"blLapsed":25}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -1072,9 +395,7 @@
         "agent": "Vikas K.",
         "sentiment": "Neutral",
         "summary": "Seller wants help refreshing catalog images. Open to retention if platform helps.",
-        "issues": [
-          "Needs catalog support"
-        ],
+        "issues": ["Needs catalog support"],
         "quote": "",
         "disposition": "Willing",
         "competitorMentioned": "",
@@ -1094,105 +415,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 42
-        },
-        {
-          "month": "Apr",
-          "value": 28
-        },
-        {
-          "month": "May",
-          "value": 13
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 46
-        },
-        {
-          "month": "Apr",
-          "value": 30
-        },
-        {
-          "month": "May",
-          "value": 14
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 35
-        },
-        {
-          "month": "Apr",
-          "value": 29
-        },
-        {
-          "month": "May",
-          "value": 19
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 32
-        },
-        {
-          "month": "Apr",
-          "value": 24
-        },
-        {
-          "month": "May",
-          "value": 16
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 64
-        },
-        {
-          "month": "Apr",
-          "value": 67
-        },
-        {
-          "month": "May",
-          "value": 73
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 49
-        },
-        {
-          "month": "Apr",
-          "value": 40
-        },
-        {
-          "month": "May",
-          "value": 36
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 49
-        },
-        {
-          "month": "Apr",
-          "value": 42
-        },
-        {
-          "month": "May",
-          "value": 31
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":42},{"month":"Apr","value":28},{"month":"May","value":13}],
+      "blConsumptionPct": [{"month":"Mar","value":46},{"month":"Apr","value":30},{"month":"May","value":14}],
+      "pnsPickupRatePct": [{"month":"Mar","value":35},{"month":"Apr","value":29},{"month":"May","value":19}],
+      "lmsReplyRatePct": [{"month":"Mar","value":32},{"month":"Apr","value":24},{"month":"May","value":16}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":64},{"month":"Apr","value":67},{"month":"May","value":73}],
+      "catalogScore": [{"month":"Mar","value":49},{"month":"Apr","value":40},{"month":"May","value":36}],
+      "cqs": [{"month":"Mar","value":49},{"month":"Apr","value":42},{"month":"May","value":31}],
+      "blni": [{"month":"Mar","value":22},{"month":"Apr","value":28},{"month":"May","value":35}],
+      "blActiveDays": [{"month":"Mar","value":8},{"month":"Apr","value":5},{"month":"May","value":3}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":35,"totalEnq":48,"cons0to4hrs":18,"cons4to24hrs":11,"consGt1day":6,"blLapsed":15},
+      {"month":"Jan 2026","blConsumed":30,"totalEnq":42,"cons0to4hrs":15,"cons4to24hrs":9,"consGt1day":6,"blLapsed":20},
+      {"month":"Feb 2026","blConsumed":25,"totalEnq":36,"cons0to4hrs":12,"cons4to24hrs":8,"consGt1day":5,"blLapsed":25},
+      {"month":"Mar 2026","blConsumed":20,"totalEnq":30,"cons0to4hrs":9,"cons4to24hrs":7,"consGt1day":4,"blLapsed":30},
+      {"month":"Apr 2026","blConsumed":14,"totalEnq":22,"cons0to4hrs":5,"cons4to24hrs":5,"consGt1day":4,"blLapsed":36},
+      {"month":"May 2026","blConsumed":8,"totalEnq":14,"cons0to4hrs":2,"cons4to24hrs":3,"consGt1day":3,"blLapsed":42}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -1201,12 +441,8 @@
         "durationMin": 16,
         "agent": "Anita R.",
         "sentiment": "Negative",
-        "summary": "Frustrated with LMS UI \u00e2\u20ac\u201d team cannot keep up with replies. Losing leads daily.",
-        "issues": [
-          "LMS hard to use",
-          "Team training gap",
-          "Lead reply delays"
-        ],
+        "summary": "Frustrated with LMS UI — team cannot keep up with replies. Losing leads daily.",
+        "issues": ["LMS hard to use","Team training gap","Lead reply delays"],
         "quote": "My staff doesn't understand the new LMS. We're losing leads daily.",
         "disposition": "Skeptical",
         "competitorMentioned": "",
@@ -1226,105 +462,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 61
-        },
-        {
-          "month": "Apr",
-          "value": 53
-        },
-        {
-          "month": "May",
-          "value": 45
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 68
-        },
-        {
-          "month": "Apr",
-          "value": 57
-        },
-        {
-          "month": "May",
-          "value": 50
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 54
-        },
-        {
-          "month": "Apr",
-          "value": 48
-        },
-        {
-          "month": "May",
-          "value": 45
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 51
-        },
-        {
-          "month": "Apr",
-          "value": 44
-        },
-        {
-          "month": "May",
-          "value": 35
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 43
-        },
-        {
-          "month": "Apr",
-          "value": 44
-        },
-        {
-          "month": "May",
-          "value": 51
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 65
-        },
-        {
-          "month": "Apr",
-          "value": 62
-        },
-        {
-          "month": "May",
-          "value": 56
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 61
-        },
-        {
-          "month": "Apr",
-          "value": 57
-        },
-        {
-          "month": "May",
-          "value": 54
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":61},{"month":"Apr","value":53},{"month":"May","value":45}],
+      "blConsumptionPct": [{"month":"Mar","value":68},{"month":"Apr","value":57},{"month":"May","value":50}],
+      "pnsPickupRatePct": [{"month":"Mar","value":54},{"month":"Apr","value":48},{"month":"May","value":45}],
+      "lmsReplyRatePct": [{"month":"Mar","value":51},{"month":"Apr","value":44},{"month":"May","value":35}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":43},{"month":"Apr","value":44},{"month":"May","value":51}],
+      "catalogScore": [{"month":"Mar","value":65},{"month":"Apr","value":62},{"month":"May","value":56}],
+      "cqs": [{"month":"Mar","value":61},{"month":"Apr","value":57},{"month":"May","value":54}],
+      "blni": [{"month":"Mar","value":10},{"month":"Apr","value":12},{"month":"May","value":14}],
+      "blActiveDays": [{"month":"Mar","value":16},{"month":"Apr","value":14},{"month":"May","value":12}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":62,"totalEnq":78,"cons0to4hrs":32,"cons4to24hrs":20,"consGt1day":10,"blLapsed":18},
+      {"month":"Jan 2026","blConsumed":58,"totalEnq":74,"cons0to4hrs":30,"cons4to24hrs":18,"consGt1day":10,"blLapsed":22},
+      {"month":"Feb 2026","blConsumed":54,"totalEnq":70,"cons0to4hrs":28,"cons4to24hrs":17,"consGt1day":9,"blLapsed":26},
+      {"month":"Mar 2026","blConsumed":50,"totalEnq":65,"cons0to4hrs":26,"cons4to24hrs":16,"consGt1day":8,"blLapsed":30},
+      {"month":"Apr 2026","blConsumed":46,"totalEnq":58,"cons0to4hrs":24,"cons4to24hrs":14,"consGt1day":8,"blLapsed":34},
+      {"month":"May 2026","blConsumed":42,"totalEnq":52,"cons0to4hrs":22,"cons4to24hrs":13,"consGt1day":7,"blLapsed":38}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -1333,11 +488,8 @@
         "durationMin": 18,
         "agent": "Rahul S.",
         "sentiment": "Negative",
-        "summary": "Pricing complaint \u00e2\u20ac\u201d renewal cost up 20% but orders haven't grown proportionally.",
-        "issues": [
-          "Pricing vs ROI",
-          "Wants discount on renewal"
-        ],
+        "summary": "Pricing complaint — renewal cost up 20% but orders haven't grown proportionally.",
+        "issues": ["Pricing vs ROI","Wants discount on renewal"],
         "quote": "Renewal cost has gone up 20% but my orders haven't.",
         "disposition": "Skeptical",
         "competitorMentioned": "",
@@ -1357,105 +509,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 74
-        },
-        {
-          "month": "Apr",
-          "value": 67
-        },
-        {
-          "month": "May",
-          "value": 61
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 64
-        },
-        {
-          "month": "Apr",
-          "value": 57
-        },
-        {
-          "month": "May",
-          "value": 47
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 66
-        },
-        {
-          "month": "Apr",
-          "value": 62
-        },
-        {
-          "month": "May",
-          "value": 55
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 65
-        },
-        {
-          "month": "Apr",
-          "value": 58
-        },
-        {
-          "month": "May",
-          "value": 50
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 30
-        },
-        {
-          "month": "Apr",
-          "value": 29
-        },
-        {
-          "month": "May",
-          "value": 28
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 73
-        },
-        {
-          "month": "Apr",
-          "value": 70
-        },
-        {
-          "month": "May",
-          "value": 65
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 67
-        },
-        {
-          "month": "Apr",
-          "value": 67
-        },
-        {
-          "month": "May",
-          "value": 65
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":74},{"month":"Apr","value":67},{"month":"May","value":61}],
+      "blConsumptionPct": [{"month":"Mar","value":64},{"month":"Apr","value":57},{"month":"May","value":47}],
+      "pnsPickupRatePct": [{"month":"Mar","value":66},{"month":"Apr","value":62},{"month":"May","value":55}],
+      "lmsReplyRatePct": [{"month":"Mar","value":65},{"month":"Apr","value":58},{"month":"May","value":50}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":30},{"month":"Apr","value":29},{"month":"May","value":28}],
+      "catalogScore": [{"month":"Mar","value":73},{"month":"Apr","value":70},{"month":"May","value":65}],
+      "cqs": [{"month":"Mar","value":67},{"month":"Apr","value":67},{"month":"May","value":65}],
+      "blni": [{"month":"Mar","value":8},{"month":"Apr","value":10},{"month":"May","value":11}],
+      "blActiveDays": [{"month":"Mar","value":16},{"month":"Apr","value":14},{"month":"May","value":13}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":42,"totalEnq":55,"cons0to4hrs":22,"cons4to24hrs":14,"consGt1day":6,"blLapsed":8},
+      {"month":"Jan 2026","blConsumed":40,"totalEnq":52,"cons0to4hrs":21,"cons4to24hrs":13,"consGt1day":6,"blLapsed":10},
+      {"month":"Feb 2026","blConsumed":38,"totalEnq":49,"cons0to4hrs":20,"cons4to24hrs":12,"consGt1day":6,"blLapsed":12},
+      {"month":"Mar 2026","blConsumed":36,"totalEnq":46,"cons0to4hrs":19,"cons4to24hrs":11,"consGt1day":6,"blLapsed":14},
+      {"month":"Apr 2026","blConsumed":33,"totalEnq":43,"cons0to4hrs":17,"cons4to24hrs":11,"consGt1day":5,"blLapsed":17},
+      {"month":"May 2026","blConsumed":28,"totalEnq":39,"cons0to4hrs":15,"cons4to24hrs":9,"consGt1day":4,"blLapsed":22}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -1464,10 +535,8 @@
         "durationMin": 10,
         "agent": "Vikas K.",
         "sentiment": "Neutral",
-        "summary": "Seller acknowledges seasonal slowdown in construction activity Mar\u00e2\u20ac\u201cMay. Expects recovery in June.",
-        "issues": [
-          "Seasonal low order volume"
-        ],
+        "summary": "Seller acknowledges seasonal slowdown in construction activity Mar–May. Expects recovery in June.",
+        "issues": ["Seasonal low order volume"],
         "quote": "",
         "disposition": "Willing",
         "competitorMentioned": "",
@@ -1487,105 +556,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 68
-        },
-        {
-          "month": "Apr",
-          "value": 57
-        },
-        {
-          "month": "May",
-          "value": 49
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 58
-        },
-        {
-          "month": "Apr",
-          "value": 44
-        },
-        {
-          "month": "May",
-          "value": 40
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 61
-        },
-        {
-          "month": "Apr",
-          "value": 54
-        },
-        {
-          "month": "May",
-          "value": 46
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 60
-        },
-        {
-          "month": "Apr",
-          "value": 49
-        },
-        {
-          "month": "May",
-          "value": 43
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 42
-        },
-        {
-          "month": "Apr",
-          "value": 44
-        },
-        {
-          "month": "May",
-          "value": 45
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 62
-        },
-        {
-          "month": "Apr",
-          "value": 60
-        },
-        {
-          "month": "May",
-          "value": 61
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 63
-        },
-        {
-          "month": "Apr",
-          "value": 57
-        },
-        {
-          "month": "May",
-          "value": 56
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":68},{"month":"Apr","value":57},{"month":"May","value":49}],
+      "blConsumptionPct": [{"month":"Mar","value":58},{"month":"Apr","value":44},{"month":"May","value":40}],
+      "pnsPickupRatePct": [{"month":"Mar","value":61},{"month":"Apr","value":54},{"month":"May","value":46}],
+      "lmsReplyRatePct": [{"month":"Mar","value":60},{"month":"Apr","value":49},{"month":"May","value":43}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":42},{"month":"Apr","value":44},{"month":"May","value":45}],
+      "catalogScore": [{"month":"Mar","value":62},{"month":"Apr","value":60},{"month":"May","value":61}],
+      "cqs": [{"month":"Mar","value":63},{"month":"Apr","value":57},{"month":"May","value":56}],
+      "blni": [{"month":"Mar","value":10},{"month":"Apr","value":11},{"month":"May","value":12}],
+      "blActiveDays": [{"month":"Mar","value":14},{"month":"Apr","value":12},{"month":"May","value":11}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":24,"totalEnq":35,"cons0to4hrs":13,"cons4to24hrs":8,"consGt1day":3,"blLapsed":6},
+      {"month":"Jan 2026","blConsumed":23,"totalEnq":33,"cons0to4hrs":12,"cons4to24hrs":8,"consGt1day":3,"blLapsed":7},
+      {"month":"Feb 2026","blConsumed":21,"totalEnq":31,"cons0to4hrs":11,"cons4to24hrs":7,"consGt1day":3,"blLapsed":9},
+      {"month":"Mar 2026","blConsumed":20,"totalEnq":29,"cons0to4hrs":11,"cons4to24hrs":7,"consGt1day":2,"blLapsed":10},
+      {"month":"Apr 2026","blConsumed":18,"totalEnq":26,"cons0to4hrs":10,"cons4to24hrs":6,"consGt1day":2,"blLapsed":12},
+      {"month":"May 2026","blConsumed":16,"totalEnq":23,"cons0to4hrs":9,"cons4to24hrs":5,"consGt1day":2,"blLapsed":14}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -1595,10 +583,7 @@
         "agent": "Anita R.",
         "sentiment": "Neutral",
         "summary": "Seller not seeing enough B2B food-factory buyers. ROI concerns but willing to continue if improved.",
-        "issues": [
-          "Buyer quality concern",
-          "ROI disappointment"
-        ],
+        "issues": ["Buyer quality concern","ROI disappointment"],
         "quote": "",
         "disposition": "Willing",
         "competitorMentioned": "",
@@ -1618,105 +603,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 70
-        },
-        {
-          "month": "Apr",
-          "value": 65
-        },
-        {
-          "month": "May",
-          "value": 56
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 63
-        },
-        {
-          "month": "Apr",
-          "value": 52
-        },
-        {
-          "month": "May",
-          "value": 48
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 67
-        },
-        {
-          "month": "Apr",
-          "value": 59
-        },
-        {
-          "month": "May",
-          "value": 52
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 66
-        },
-        {
-          "month": "Apr",
-          "value": 59
-        },
-        {
-          "month": "May",
-          "value": 50
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 58
-        },
-        {
-          "month": "Apr",
-          "value": 60
-        },
-        {
-          "month": "May",
-          "value": 58
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 63
-        },
-        {
-          "month": "Apr",
-          "value": 59
-        },
-        {
-          "month": "May",
-          "value": 57
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 65
-        },
-        {
-          "month": "Apr",
-          "value": 62
-        },
-        {
-          "month": "May",
-          "value": 58
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":70},{"month":"Apr","value":65},{"month":"May","value":56}],
+      "blConsumptionPct": [{"month":"Mar","value":63},{"month":"Apr","value":52},{"month":"May","value":48}],
+      "pnsPickupRatePct": [{"month":"Mar","value":67},{"month":"Apr","value":59},{"month":"May","value":52}],
+      "lmsReplyRatePct": [{"month":"Mar","value":66},{"month":"Apr","value":59},{"month":"May","value":50}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":58},{"month":"Apr","value":60},{"month":"May","value":58}],
+      "catalogScore": [{"month":"Mar","value":63},{"month":"Apr","value":59},{"month":"May","value":57}],
+      "cqs": [{"month":"Mar","value":65},{"month":"Apr","value":62},{"month":"May","value":58}],
+      "blni": [{"month":"Mar","value":12},{"month":"Apr","value":14},{"month":"May","value":15}],
+      "blActiveDays": [{"month":"Mar","value":17},{"month":"Apr","value":15},{"month":"May","value":13}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":58,"totalEnq":72,"cons0to4hrs":30,"cons4to24hrs":18,"consGt1day":10,"blLapsed":22},
+      {"month":"Jan 2026","blConsumed":55,"totalEnq":68,"cons0to4hrs":28,"cons4to24hrs":17,"consGt1day":10,"blLapsed":25},
+      {"month":"Feb 2026","blConsumed":52,"totalEnq":65,"cons0to4hrs":27,"cons4to24hrs":16,"consGt1day":9,"blLapsed":28},
+      {"month":"Mar 2026","blConsumed":50,"totalEnq":62,"cons0to4hrs":26,"cons4to24hrs":15,"consGt1day":9,"blLapsed":30},
+      {"month":"Apr 2026","blConsumed":46,"totalEnq":58,"cons0to4hrs":24,"cons4to24hrs":14,"consGt1day":8,"blLapsed":34},
+      {"month":"May 2026","blConsumed":44,"totalEnq":55,"cons0to4hrs":23,"cons4to24hrs":13,"consGt1day":8,"blLapsed":36}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -1726,10 +630,7 @@
         "agent": "Rahul S.",
         "sentiment": "Negative",
         "summary": "Getting retail pharmacy leads despite being a bulk API/ingredient supplier.",
-        "issues": [
-          "Lead quality dropped",
-          "BL filters not working"
-        ],
+        "issues": ["Lead quality dropped","BL filters not working"],
         "quote": "I need bulk pharma buyers, not medical shops. Fix the filter or I'm leaving.",
         "disposition": "Skeptical",
         "competitorMentioned": "",
@@ -1749,105 +650,24 @@
     "status": "Pending",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 70
-        },
-        {
-          "month": "Apr",
-          "value": 66
-        },
-        {
-          "month": "May",
-          "value": 59
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 63
-        },
-        {
-          "month": "Apr",
-          "value": 55
-        },
-        {
-          "month": "May",
-          "value": 51
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 70
-        },
-        {
-          "month": "Apr",
-          "value": 63
-        },
-        {
-          "month": "May",
-          "value": 55
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 70
-        },
-        {
-          "month": "Apr",
-          "value": 60
-        },
-        {
-          "month": "May",
-          "value": 57
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 35
-        },
-        {
-          "month": "Apr",
-          "value": 39
-        },
-        {
-          "month": "May",
-          "value": 42
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 67
-        },
-        {
-          "month": "Apr",
-          "value": 64
-        },
-        {
-          "month": "May",
-          "value": 62
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 63
-        },
-        {
-          "month": "Apr",
-          "value": 62
-        },
-        {
-          "month": "May",
-          "value": 63
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":70},{"month":"Apr","value":66},{"month":"May","value":59}],
+      "blConsumptionPct": [{"month":"Mar","value":63},{"month":"Apr","value":55},{"month":"May","value":51}],
+      "pnsPickupRatePct": [{"month":"Mar","value":70},{"month":"Apr","value":63},{"month":"May","value":55}],
+      "lmsReplyRatePct": [{"month":"Mar","value":70},{"month":"Apr","value":60},{"month":"May","value":57}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":35},{"month":"Apr","value":39},{"month":"May","value":42}],
+      "catalogScore": [{"month":"Mar","value":67},{"month":"Apr","value":64},{"month":"May","value":62}],
+      "cqs": [{"month":"Mar","value":63},{"month":"Apr","value":62},{"month":"May","value":63}],
+      "blni": [{"month":"Mar","value":7},{"month":"Apr","value":8},{"month":"May","value":9}],
+      "blActiveDays": [{"month":"Mar","value":18},{"month":"Apr","value":16},{"month":"May","value":15}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":44,"totalEnq":58,"cons0to4hrs":23,"cons4to24hrs":14,"consGt1day":7,"blLapsed":6},
+      {"month":"Jan 2026","blConsumed":42,"totalEnq":55,"cons0to4hrs":22,"cons4to24hrs":13,"consGt1day":7,"blLapsed":8},
+      {"month":"Feb 2026","blConsumed":40,"totalEnq":52,"cons0to4hrs":21,"cons4to24hrs":12,"consGt1day":7,"blLapsed":10},
+      {"month":"Mar 2026","blConsumed":38,"totalEnq":49,"cons0to4hrs":20,"cons4to24hrs":12,"consGt1day":6,"blLapsed":12},
+      {"month":"Apr 2026","blConsumed":36,"totalEnq":46,"cons0to4hrs":19,"cons4to24hrs":11,"consGt1day":6,"blLapsed":14},
+      {"month":"May 2026","blConsumed":34,"totalEnq":43,"cons0to4hrs":18,"cons4to24hrs":10,"consGt1day":6,"blLapsed":16}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -1857,10 +677,7 @@
         "agent": "Priya D.",
         "sentiment": "Negative",
         "summary": "Received IndiaB2B prospecting call. Comparing platform features and pricing.",
-        "issues": [
-          "Competitor offer received",
-          "Platform feature comparison"
-        ],
+        "issues": ["Competitor offer received","Platform feature comparison"],
         "quote": "IndiaB2B showed me a feature where buyers can schedule a call. Does IndiaMART have that?",
         "disposition": "Skeptical",
         "competitorMentioned": "IndiaB2B",
@@ -1880,105 +697,24 @@
     "status": "Resolved",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 66
-        },
-        {
-          "month": "Apr",
-          "value": 61
-        },
-        {
-          "month": "May",
-          "value": 56
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 70
-        },
-        {
-          "month": "Apr",
-          "value": 65
-        },
-        {
-          "month": "May",
-          "value": 64
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 60
-        },
-        {
-          "month": "Apr",
-          "value": 54
-        },
-        {
-          "month": "May",
-          "value": 53
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 57
-        },
-        {
-          "month": "Apr",
-          "value": 52
-        },
-        {
-          "month": "May",
-          "value": 50
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 45
-        },
-        {
-          "month": "Apr",
-          "value": 40
-        },
-        {
-          "month": "May",
-          "value": 42
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 70
-        },
-        {
-          "month": "Apr",
-          "value": 69
-        },
-        {
-          "month": "May",
-          "value": 67
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 69
-        },
-        {
-          "month": "Apr",
-          "value": 68
-        },
-        {
-          "month": "May",
-          "value": 66
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":66},{"month":"Apr","value":61},{"month":"May","value":56}],
+      "blConsumptionPct": [{"month":"Mar","value":70},{"month":"Apr","value":65},{"month":"May","value":64}],
+      "pnsPickupRatePct": [{"month":"Mar","value":60},{"month":"Apr","value":54},{"month":"May","value":53}],
+      "lmsReplyRatePct": [{"month":"Mar","value":57},{"month":"Apr","value":52},{"month":"May","value":50}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":45},{"month":"Apr","value":40},{"month":"May","value":42}],
+      "catalogScore": [{"month":"Mar","value":70},{"month":"Apr","value":69},{"month":"May","value":67}],
+      "cqs": [{"month":"Mar","value":69},{"month":"Apr","value":68},{"month":"May","value":66}],
+      "blni": [{"month":"Mar","value":6},{"month":"Apr","value":5},{"month":"May","value":5}],
+      "blActiveDays": [{"month":"Mar","value":18},{"month":"Apr","value":17},{"month":"May","value":16}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":26,"totalEnq":38,"cons0to4hrs":15,"cons4to24hrs":8,"consGt1day":3,"blLapsed":4},
+      {"month":"Jan 2026","blConsumed":25,"totalEnq":36,"cons0to4hrs":14,"cons4to24hrs":8,"consGt1day":3,"blLapsed":5},
+      {"month":"Feb 2026","blConsumed":25,"totalEnq":35,"cons0to4hrs":14,"cons4to24hrs":8,"consGt1day":3,"blLapsed":5},
+      {"month":"Mar 2026","blConsumed":24,"totalEnq":34,"cons0to4hrs":14,"cons4to24hrs":7,"consGt1day":3,"blLapsed":6},
+      {"month":"Apr 2026","blConsumed":23,"totalEnq":33,"cons0to4hrs":13,"cons4to24hrs":7,"consGt1day":3,"blLapsed":7},
+      {"month":"May 2026","blConsumed":22,"totalEnq":32,"cons0to4hrs":13,"cons4to24hrs":7,"consGt1day":2,"blLapsed":8}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -2008,105 +744,24 @@
     "status": "Resolved",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 92
-        },
-        {
-          "month": "Apr",
-          "value": 93
-        },
-        {
-          "month": "May",
-          "value": 89
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 85
-        },
-        {
-          "month": "Apr",
-          "value": 91
-        },
-        {
-          "month": "May",
-          "value": 91
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 85
-        },
-        {
-          "month": "Apr",
-          "value": 86
-        },
-        {
-          "month": "May",
-          "value": 90
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 79
-        },
-        {
-          "month": "Apr",
-          "value": 85
-        },
-        {
-          "month": "May",
-          "value": 89
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 25
-        },
-        {
-          "month": "Apr",
-          "value": 27
-        },
-        {
-          "month": "May",
-          "value": 24
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 87
-        },
-        {
-          "month": "Apr",
-          "value": 94
-        },
-        {
-          "month": "May",
-          "value": 90
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 74
-        },
-        {
-          "month": "Apr",
-          "value": 76
-        },
-        {
-          "month": "May",
-          "value": 77
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":92},{"month":"Apr","value":93},{"month":"May","value":89}],
+      "blConsumptionPct": [{"month":"Mar","value":85},{"month":"Apr","value":91},{"month":"May","value":91}],
+      "pnsPickupRatePct": [{"month":"Mar","value":85},{"month":"Apr","value":86},{"month":"May","value":90}],
+      "lmsReplyRatePct": [{"month":"Mar","value":79},{"month":"Apr","value":85},{"month":"May","value":89}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":25},{"month":"Apr","value":27},{"month":"May","value":24}],
+      "catalogScore": [{"month":"Mar","value":87},{"month":"Apr","value":94},{"month":"May","value":90}],
+      "cqs": [{"month":"Mar","value":74},{"month":"Apr","value":76},{"month":"May","value":77}],
+      "blni": [{"month":"Mar","value":4},{"month":"Apr","value":3},{"month":"May","value":3}],
+      "blActiveDays": [{"month":"Mar","value":22},{"month":"Apr","value":23},{"month":"May","value":22}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":108,"totalEnq":145,"cons0to4hrs":65,"cons4to24hrs":30,"consGt1day":13,"blLapsed":12},
+      {"month":"Jan 2026","blConsumed":110,"totalEnq":148,"cons0to4hrs":66,"cons4to24hrs":31,"consGt1day":13,"blLapsed":10},
+      {"month":"Feb 2026","blConsumed":109,"totalEnq":147,"cons0to4hrs":65,"cons4to24hrs":31,"consGt1day":13,"blLapsed":11},
+      {"month":"Mar 2026","blConsumed":112,"totalEnq":150,"cons0to4hrs":67,"cons4to24hrs":32,"consGt1day":13,"blLapsed":8},
+      {"month":"Apr 2026","blConsumed":114,"totalEnq":152,"cons0to4hrs":68,"cons4to24hrs":32,"consGt1day":14,"blLapsed":6},
+      {"month":"May 2026","blConsumed":112,"totalEnq":150,"cons0to4hrs":67,"cons4to24hrs":31,"consGt1day":14,"blLapsed":8}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -2136,105 +791,24 @@
     "status": "Resolved",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 85
-        },
-        {
-          "month": "Apr",
-          "value": 90
-        },
-        {
-          "month": "May",
-          "value": 88
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 83
-        },
-        {
-          "month": "Apr",
-          "value": 84
-        },
-        {
-          "month": "May",
-          "value": 84
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 79
-        },
-        {
-          "month": "Apr",
-          "value": 80
-        },
-        {
-          "month": "May",
-          "value": 82
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 80
-        },
-        {
-          "month": "Apr",
-          "value": 78
-        },
-        {
-          "month": "May",
-          "value": 79
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 25
-        },
-        {
-          "month": "Apr",
-          "value": 28
-        },
-        {
-          "month": "May",
-          "value": 28
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 84
-        },
-        {
-          "month": "Apr",
-          "value": 86
-        },
-        {
-          "month": "May",
-          "value": 86
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 81
-        },
-        {
-          "month": "Apr",
-          "value": 84
-        },
-        {
-          "month": "May",
-          "value": 84
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":85},{"month":"Apr","value":90},{"month":"May","value":88}],
+      "blConsumptionPct": [{"month":"Mar","value":83},{"month":"Apr","value":84},{"month":"May","value":84}],
+      "pnsPickupRatePct": [{"month":"Mar","value":79},{"month":"Apr","value":80},{"month":"May","value":82}],
+      "lmsReplyRatePct": [{"month":"Mar","value":80},{"month":"Apr","value":78},{"month":"May","value":79}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":25},{"month":"Apr","value":28},{"month":"May","value":28}],
+      "catalogScore": [{"month":"Mar","value":84},{"month":"Apr","value":86},{"month":"May","value":86}],
+      "cqs": [{"month":"Mar","value":81},{"month":"Apr","value":84},{"month":"May","value":84}],
+      "blni": [{"month":"Mar","value":5},{"month":"Apr","value":4},{"month":"May","value":4}],
+      "blActiveDays": [{"month":"Mar","value":20},{"month":"Apr","value":21},{"month":"May","value":20}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":68,"totalEnq":88,"cons0to4hrs":38,"cons4to24hrs":20,"consGt1day":10,"blLapsed":12},
+      {"month":"Jan 2026","blConsumed":70,"totalEnq":90,"cons0to4hrs":39,"cons4to24hrs":21,"consGt1day":10,"blLapsed":10},
+      {"month":"Feb 2026","blConsumed":70,"totalEnq":91,"cons0to4hrs":39,"cons4to24hrs":21,"consGt1day":10,"blLapsed":10},
+      {"month":"Mar 2026","blConsumed":72,"totalEnq":92,"cons0to4hrs":40,"cons4to24hrs":22,"consGt1day":10,"blLapsed":8},
+      {"month":"Apr 2026","blConsumed":74,"totalEnq":94,"cons0to4hrs":41,"cons4to24hrs":22,"consGt1day":11,"blLapsed":6},
+      {"month":"May 2026","blConsumed":74,"totalEnq":94,"cons0to4hrs":41,"cons4to24hrs":22,"consGt1day":11,"blLapsed":6}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -2264,105 +838,24 @@
     "status": "Resolved",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 82
-        },
-        {
-          "month": "Apr",
-          "value": 76
-        },
-        {
-          "month": "May",
-          "value": 75
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 73
-        },
-        {
-          "month": "Apr",
-          "value": 71
-        },
-        {
-          "month": "May",
-          "value": 74
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 76
-        },
-        {
-          "month": "Apr",
-          "value": 79
-        },
-        {
-          "month": "May",
-          "value": 81
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 72
-        },
-        {
-          "month": "Apr",
-          "value": 70
-        },
-        {
-          "month": "May",
-          "value": 70
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 32
-        },
-        {
-          "month": "Apr",
-          "value": 38
-        },
-        {
-          "month": "May",
-          "value": 38
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 80
-        },
-        {
-          "month": "Apr",
-          "value": 82
-        },
-        {
-          "month": "May",
-          "value": 80
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 78
-        },
-        {
-          "month": "Apr",
-          "value": 80
-        },
-        {
-          "month": "May",
-          "value": 78
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":82},{"month":"Apr","value":76},{"month":"May","value":75}],
+      "blConsumptionPct": [{"month":"Mar","value":73},{"month":"Apr","value":71},{"month":"May","value":74}],
+      "pnsPickupRatePct": [{"month":"Mar","value":76},{"month":"Apr","value":79},{"month":"May","value":81}],
+      "lmsReplyRatePct": [{"month":"Mar","value":72},{"month":"Apr","value":70},{"month":"May","value":70}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":32},{"month":"Apr","value":38},{"month":"May","value":38}],
+      "catalogScore": [{"month":"Mar","value":80},{"month":"Apr","value":82},{"month":"May","value":80}],
+      "cqs": [{"month":"Mar","value":78},{"month":"Apr","value":80},{"month":"May","value":78}],
+      "blni": [{"month":"Mar","value":6},{"month":"Apr","value":5},{"month":"May","value":5}],
+      "blActiveDays": [{"month":"Mar","value":19},{"month":"Apr","value":18},{"month":"May","value":18}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":23,"totalEnq":32,"cons0to4hrs":13,"cons4to24hrs":7,"consGt1day":3,"blLapsed":7},
+      {"month":"Jan 2026","blConsumed":24,"totalEnq":33,"cons0to4hrs":13,"cons4to24hrs":7,"consGt1day":4,"blLapsed":6},
+      {"month":"Feb 2026","blConsumed":24,"totalEnq":33,"cons0to4hrs":14,"cons4to24hrs":7,"consGt1day":3,"blLapsed":6},
+      {"month":"Mar 2026","blConsumed":25,"totalEnq":35,"cons0to4hrs":14,"cons4to24hrs":7,"consGt1day":4,"blLapsed":5},
+      {"month":"Apr 2026","blConsumed":25,"totalEnq":34,"cons0to4hrs":14,"cons4to24hrs":8,"consGt1day":3,"blLapsed":5},
+      {"month":"May 2026","blConsumed":26,"totalEnq":36,"cons0to4hrs":15,"cons4to24hrs":8,"consGt1day":3,"blLapsed":4}
+    ],
     "callInsights": []
   },
   {
@@ -2376,105 +869,24 @@
     "status": "Resolved",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 93
-        },
-        {
-          "month": "Apr",
-          "value": 92
-        },
-        {
-          "month": "May",
-          "value": 90
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 78
-        },
-        {
-          "month": "Apr",
-          "value": 78
-        },
-        {
-          "month": "May",
-          "value": 81
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 86
-        },
-        {
-          "month": "Apr",
-          "value": 92
-        },
-        {
-          "month": "May",
-          "value": 93
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 82
-        },
-        {
-          "month": "Apr",
-          "value": 85
-        },
-        {
-          "month": "May",
-          "value": 87
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 20
-        },
-        {
-          "month": "Apr",
-          "value": 16
-        },
-        {
-          "month": "May",
-          "value": 15
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 86
-        },
-        {
-          "month": "Apr",
-          "value": 87
-        },
-        {
-          "month": "May",
-          "value": 86
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 83
-        },
-        {
-          "month": "Apr",
-          "value": 82
-        },
-        {
-          "month": "May",
-          "value": 89
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":93},{"month":"Apr","value":92},{"month":"May","value":90}],
+      "blConsumptionPct": [{"month":"Mar","value":78},{"month":"Apr","value":78},{"month":"May","value":81}],
+      "pnsPickupRatePct": [{"month":"Mar","value":86},{"month":"Apr","value":92},{"month":"May","value":93}],
+      "lmsReplyRatePct": [{"month":"Mar","value":82},{"month":"Apr","value":85},{"month":"May","value":87}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":20},{"month":"Apr","value":16},{"month":"May","value":15}],
+      "catalogScore": [{"month":"Mar","value":86},{"month":"Apr","value":87},{"month":"May","value":86}],
+      "cqs": [{"month":"Mar","value":83},{"month":"Apr","value":82},{"month":"May","value":89}],
+      "blni": [{"month":"Mar","value":3},{"month":"Apr","value":3},{"month":"May","value":3}],
+      "blActiveDays": [{"month":"Mar","value":23},{"month":"Apr","value":24},{"month":"May","value":24}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":94,"totalEnq":128,"cons0to4hrs":55,"cons4to24hrs":28,"consGt1day":11,"blLapsed":26},
+      {"month":"Jan 2026","blConsumed":96,"totalEnq":130,"cons0to4hrs":56,"cons4to24hrs":29,"consGt1day":11,"blLapsed":24},
+      {"month":"Feb 2026","blConsumed":96,"totalEnq":131,"cons0to4hrs":56,"cons4to24hrs":29,"consGt1day":11,"blLapsed":24},
+      {"month":"Mar 2026","blConsumed":98,"totalEnq":134,"cons0to4hrs":57,"cons4to24hrs":30,"consGt1day":11,"blLapsed":22},
+      {"month":"Apr 2026","blConsumed":100,"totalEnq":136,"cons0to4hrs":58,"cons4to24hrs":30,"consGt1day":12,"blLapsed":20},
+      {"month":"May 2026","blConsumed":102,"totalEnq":138,"cons0to4hrs":59,"cons4to24hrs":31,"consGt1day":12,"blLapsed":18}
+    ],
     "callInsights": [
       {
         "id": "C1",
@@ -2504,105 +916,24 @@
     "status": "Resolved",
     "priorChurn": false,
     "metrics": {
-      "loginPct": [
-        {
-          "month": "Mar",
-          "value": 88
-        },
-        {
-          "month": "Apr",
-          "value": 87
-        },
-        {
-          "month": "May",
-          "value": 87
-        }
-      ],
-      "blConsumptionPct": [
-        {
-          "month": "Mar",
-          "value": 74
-        },
-        {
-          "month": "Apr",
-          "value": 71
-        },
-        {
-          "month": "May",
-          "value": 78
-        }
-      ],
-      "pnsPickupRatePct": [
-        {
-          "month": "Mar",
-          "value": 80
-        },
-        {
-          "month": "Apr",
-          "value": 81
-        },
-        {
-          "month": "May",
-          "value": 84
-        }
-      ],
-      "lmsReplyRatePct": [
-        {
-          "month": "Mar",
-          "value": 77
-        },
-        {
-          "month": "Apr",
-          "value": 81
-        },
-        {
-          "month": "May",
-          "value": 81
-        }
-      ],
-      "retailBlRecommendedPct": [
-        {
-          "month": "Mar",
-          "value": 21
-        },
-        {
-          "month": "Apr",
-          "value": 20
-        },
-        {
-          "month": "May",
-          "value": 21
-        }
-      ],
-      "catalogScore": [
-        {
-          "month": "Mar",
-          "value": 81
-        },
-        {
-          "month": "Apr",
-          "value": 81
-        },
-        {
-          "month": "May",
-          "value": 81
-        }
-      ],
-      "cqs": [
-        {
-          "month": "Mar",
-          "value": 77
-        },
-        {
-          "month": "Apr",
-          "value": 73
-        },
-        {
-          "month": "May",
-          "value": 77
-        }
-      ]
+      "loginPct": [{"month":"Mar","value":88},{"month":"Apr","value":87},{"month":"May","value":87}],
+      "blConsumptionPct": [{"month":"Mar","value":74},{"month":"Apr","value":71},{"month":"May","value":78}],
+      "pnsPickupRatePct": [{"month":"Mar","value":80},{"month":"Apr","value":81},{"month":"May","value":84}],
+      "lmsReplyRatePct": [{"month":"Mar","value":77},{"month":"Apr","value":81},{"month":"May","value":81}],
+      "retailBlRecommendedPct": [{"month":"Mar","value":21},{"month":"Apr","value":20},{"month":"May","value":21}],
+      "catalogScore": [{"month":"Mar","value":81},{"month":"Apr","value":81},{"month":"May","value":81}],
+      "cqs": [{"month":"Mar","value":77},{"month":"Apr","value":73},{"month":"May","value":77}],
+      "blni": [{"month":"Mar","value":5},{"month":"Apr","value":4},{"month":"May","value":4}],
+      "blActiveDays": [{"month":"Mar","value":20},{"month":"Apr","value":20},{"month":"May","value":21}]
     },
+    "leadsHistory": [
+      {"month":"Dec 2025","blConsumed":64,"totalEnq":84,"cons0to4hrs":35,"cons4to24hrs":20,"consGt1day":9,"blLapsed":16},
+      {"month":"Jan 2026","blConsumed":62,"totalEnq":82,"cons0to4hrs":34,"cons4to24hrs":19,"consGt1day":9,"blLapsed":18},
+      {"month":"Feb 2026","blConsumed":64,"totalEnq":85,"cons0to4hrs":35,"cons4to24hrs":20,"consGt1day":9,"blLapsed":16},
+      {"month":"Mar 2026","blConsumed":65,"totalEnq":86,"cons0to4hrs":36,"cons4to24hrs":20,"consGt1day":9,"blLapsed":15},
+      {"month":"Apr 2026","blConsumed":64,"totalEnq":85,"cons0to4hrs":35,"cons4to24hrs":20,"consGt1day":9,"blLapsed":16},
+      {"month":"May 2026","blConsumed":68,"totalEnq":88,"cons0to4hrs":37,"cons4to24hrs":21,"consGt1day":10,"blLapsed":12}
+    ],
     "callInsights": [
       {
         "id": "C1",
