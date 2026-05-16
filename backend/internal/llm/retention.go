@@ -26,9 +26,10 @@ Rules:
 - 3–5 sections maximum.`
 
 // RetentionGuide generates a personalized retention call guide via Gemini.
+// mlChurnProb is the XGBoost churn probability (0–1); pass 0 if ML not yet available.
 // playbook is optional — if non-nil, historical learnings are injected into the prompt.
-func RetentionGuide(s models.Seller, playbook *models.PlaybookEntry) ([]GuideSection, error) {
-	user := buildRetentionPrompt(s, playbook)
+func RetentionGuide(s models.Seller, playbook *models.PlaybookEntry, mlChurnProb float64) ([]GuideSection, error) {
+	user := buildRetentionPrompt(s, playbook, mlChurnProb)
 	raw, err := Call(retentionSystem, user, 4096)
 	if err != nil {
 		return nil, err
@@ -41,13 +42,16 @@ func RetentionGuide(s models.Seller, playbook *models.PlaybookEntry) ([]GuideSec
 	return sections, nil
 }
 
-func buildRetentionPrompt(s models.Seller, playbook *models.PlaybookEntry) string {
+func buildRetentionPrompt(s models.Seller, playbook *models.PlaybookEntry, mlChurnProb float64) string {
 	m := s.Metrics
 
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("SELLER: %s | %s | %s | %s package | ARR ₹%dk\n", s.Name, s.Company, s.City, s.PackageType, s.ARR/1000))
 	sb.WriteString(fmt.Sprintf("CATEGORY: %s | ARCHETYPE: %s | CHURN CAUSE: %s\n", s.Category, s.Archetype, s.ChurnCause))
-	sb.WriteString(fmt.Sprintf("RENEWAL: %d days | RISK SCORE: %d/100\n", s.DaysToRenewal, s.RiskScore))
+	sb.WriteString(fmt.Sprintf("RENEWAL: %d days | RISK SCORE: %d/100 (rule-based)\n", s.DaysToRenewal, s.RiskScore))
+	if mlChurnProb > 0 {
+		sb.WriteString(fmt.Sprintf("ML CHURN PROBABILITY: %.0f%% (XGBoost model — use alongside rule-based score, not in isolation)\n", mlChurnProb*100))
+	}
 	if s.PriorChurn {
 		sb.WriteString("⚠ PRIOR CHURN: This seller was previously on Free/lapsed plan. Re-churn risk is 2.3× base rate.\n")
 	}

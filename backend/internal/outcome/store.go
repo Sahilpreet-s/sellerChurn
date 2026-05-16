@@ -21,6 +21,17 @@ func NewStore(dbPath string) (*Store, error) {
 	}
 
 	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS seller_computed (
+			seller_id          TEXT PRIMARY KEY,
+			risk_score         INTEGER,
+			archetype          TEXT,
+			churn_cause        TEXT,
+			churn_cause_reason TEXT,
+			ml_churn_prob      REAL,
+			ml_top_features    TEXT,
+			guide_json         TEXT,
+			computed_at        TEXT
+		);
 		CREATE TABLE IF NOT EXISTS outcomes (
 			id                   INTEGER PRIMARY KEY AUTOINCREMENT,
 			seller_id            TEXT NOT NULL,
@@ -143,3 +154,62 @@ func (s *Store) GetCallInsights(sellerID string) ([]models.CallInsight, error) {
 }
 
 func (s *Store) Close() { s.db.Close() }
+
+// SaveComputedState upserts the nightly-computed enrichment for one seller.
+func (s *Store) SaveComputedState(state models.ComputedState) error {
+	topJSON, _ := json.Marshal(state.MLTopFeatures)
+	_, err := s.db.Exec(`
+		INSERT OR REPLACE INTO seller_computed
+		(seller_id, risk_score, archetype, churn_cause, churn_cause_reason,
+		 ml_churn_prob, ml_top_features, guide_json, computed_at)
+		VALUES (?,?,?,?,?,?,?,?,?)`,
+		state.SellerID, state.RiskScore, state.Archetype, state.ChurnCause,
+		state.ChurnCauseReason, state.MLChurnProb, string(topJSON),
+		state.GuideJSON, state.ComputedAt,
+	)
+	return err
+}
+
+// GetComputedState returns the most recent nightly state for a seller, or nil if none.
+func (s *Store) GetComputedState(sellerID string) (*models.ComputedState, error) {
+	row := s.db.QueryRow(`
+		SELECT seller_id, risk_score, archetype, churn_cause, churn_cause_reason,
+		       ml_churn_prob, ml_top_features, guide_json, computed_at
+		FROM seller_computed WHERE seller_id=?`, sellerID)
+
+	var st models.ComputedState
+	var topJSON string
+	err := row.Scan(&st.SellerID, &st.RiskScore, &st.Archetype, &st.ChurnCause,
+		&st.ChurnCauseReason, &st.MLChurnProb, &topJSON, &st.GuideJSON, &st.ComputedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	json.Unmarshal([]byte(topJSON), &st.MLTopFeatures)
+	return &st, nil
+}
+
+// GetAllComputedStates returns all nightly states keyed by seller_id.
+func (s *Store) GetAllComputedStates() (map[string]models.ComputedState, error) {
+	rows, err := s.db.Query(`
+		SELECT seller_id, risk_score, archetype, churn_cause, churn_cause_reason,
+		       ml_churn_prob, ml_top_features, guide_json, computed_at
+		FROM seller_computed`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make(map[string]models.ComputedState)
+	for rows.Next() {
+		var st models.ComputedState
+		var topJSON string
+		rows.Scan(&st.SellerID, &st.RiskScore, &st.Archetype, &st.ChurnCause,
+			&st.ChurnCauseReason, &st.MLChurnProb, &topJSON, &st.GuideJSON, &st.ComputedAt)
+		json.Unmarshal([]byte(topJSON), &st.MLTopFeatures)
+		out[st.SellerID] = st
+	}
+	return out, nil
+}

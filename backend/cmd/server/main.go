@@ -57,7 +57,7 @@ func main() {
 	}()
 
 	// ── API ───────────────────────────────────────────────────────────────────
-	store := api.NewStore(sellers, db, cfg.MLServiceURL)
+	store := api.NewStore(sellers, db, cfg.MLServiceURL, cfg.TranscriptsFile)
 	log.Printf("Pattern alerts detected: %d", len(store.Patterns))
 
 	r := api.SetupRouter(store)

@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"sellerpulse/internal/audio"
+	"sellerpulse/internal/batch"
 	"sellerpulse/internal/llm"
 	"sellerpulse/internal/models"
 	"sellerpulse/internal/outcome"
@@ -20,24 +22,20 @@ import (
 
 // Store holds the shared application state.
 type Store struct {
-	Sellers      []models.Seller
-	Patterns     []models.PatternAlert
-	OutcomeStore *outcome.Store
-	MLServiceURL string
-	// Cached retention guides: sellerID → sections
-	guideCacheMu chan struct{}
-	guideCache   map[string][]llm.GuideSection
+	Sellers         []models.Seller
+	Patterns        []models.PatternAlert
+	OutcomeStore    *outcome.Store
+	MLServiceURL    string
+	TranscriptsFile string
 }
 
-func NewStore(sellers []models.Seller, db *outcome.Store, mlURL string) *Store {
+func NewStore(sellers []models.Seller, db *outcome.Store, mlURL string, transcriptsFile string) *Store {
 	s := &Store{
-		Sellers:      sellers,
-		OutcomeStore: db,
-		MLServiceURL: mlURL,
-		guideCacheMu: make(chan struct{}, 1),
-		guideCache:   make(map[string][]llm.GuideSection),
+		Sellers:         sellers,
+		OutcomeStore:    db,
+		MLServiceURL:    mlURL,
+		TranscriptsFile: transcriptsFile,
 	}
-	s.guideCacheMu <- struct{}{} // initialize semaphore
 	s.Patterns = patterns.Detect(sellers)
 	return s
 }
@@ -55,7 +53,21 @@ func (st *Store) findSeller(id string) (models.Seller, bool) {
 
 // GET /api/v1/sellers
 func (st *Store) ListSellers(c *gin.Context) {
-	filtered := st.Sellers
+	// Load all nightly-computed states once and merge into the seller list.
+	computed, _ := st.OutcomeStore.GetAllComputedStates()
+	sellers := make([]models.Seller, len(st.Sellers))
+	copy(sellers, st.Sellers)
+	for i, s := range sellers {
+		if cs, ok := computed[s.ID]; ok {
+			sellers[i].RiskScore = cs.RiskScore
+			sellers[i].Archetype = cs.Archetype
+			sellers[i].ChurnCause = cs.ChurnCause
+			sellers[i].ChurnCauseReason = cs.ChurnCauseReason
+			sellers[i].MLChurnProb = cs.MLChurnProb
+			sellers[i].MLTopFeatures = cs.MLTopFeatures
+		}
+	}
+	filtered := sellers
 	if risk := c.Query("risk"); risk != "" {
 		var out []models.Seller
 		for _, s := range filtered {
@@ -103,10 +115,19 @@ func (st *Store) GetSeller(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "seller not found"})
 		return
 	}
-	// Merge any DB-stored call insights on top of seed insights
+	// Merge DB call insights on top of seed insights.
 	dbInsights, _ := st.OutcomeStore.GetCallInsights(s.ID)
 	if len(dbInsights) > 0 {
 		s.CallInsights = append(dbInsights, s.CallInsights...)
+	}
+	// Merge nightly-computed enrichment when available.
+	if cs, _ := st.OutcomeStore.GetComputedState(s.ID); cs != nil {
+		s.RiskScore = cs.RiskScore
+		s.Archetype = cs.Archetype
+		s.ChurnCause = cs.ChurnCause
+		s.ChurnCauseReason = cs.ChurnCauseReason
+		s.MLChurnProb = cs.MLChurnProb
+		s.MLTopFeatures = cs.MLTopFeatures
 	}
 	c.JSON(http.StatusOK, s)
 }
@@ -237,8 +258,7 @@ func (st *Store) LogOutcome(c *gin.Context) {
 		}
 	}()
 
-	// Rebuild playbook asynchronously every 10 real outcomes so the guide improves over time.
-	// Invalidate guide cache so next generation uses the fresh playbook.
+	// Rebuild playbook asynchronously every 10 real outcomes so synthesis improves over time.
 	if totalOutcomes%10 == 0 {
 		store := st
 		go func() {
@@ -246,9 +266,6 @@ func (st *Store) LogOutcome(c *gin.Context) {
 				log.Printf("[playbook] async rebuild: %v", err)
 				return
 			}
-			<-store.guideCacheMu
-			store.guideCache = make(map[string][]llm.GuideSection)
-			store.guideCacheMu <- struct{}{}
 			log.Printf("[playbook] rebuilt after %d outcomes", totalOutcomes)
 		}()
 	}
@@ -270,29 +287,84 @@ func (st *Store) GetRetentionGuide(c *gin.Context) {
 		return
 	}
 
-	// Return cached if available
-	<-st.guideCacheMu
-	cached, hit := st.guideCache[sellerID]
-	st.guideCacheMu <- struct{}{}
-	if hit {
-		c.JSON(http.StatusOK, gin.H{"sections": cached, "cached": true})
-		return
+	// Primary path: return the pre-generated guide from the nightly batch.
+	if cs, _ := st.OutcomeStore.GetComputedState(sellerID); cs != nil && cs.GuideJSON != "" {
+		var sections []llm.GuideSection
+		if err := json.Unmarshal([]byte(cs.GuideJSON), &sections); err == nil {
+			c.JSON(http.StatusOK, gin.H{"sections": sections, "cached": true, "source": "nightly_batch", "computedAt": cs.ComputedAt})
+			return
+		}
 	}
 
-	// Enrich guide with historical playbook learnings for this archetype (nil-safe if no entry yet)
-	pb, _ := st.OutcomeStore.GetPlaybookEntry(s.Archetype)
+	// Fallback: no nightly data yet — generate on demand.
+	// Merge DB call insights so the guide has real transcript data.
+	dbInsights, _ := st.OutcomeStore.GetCallInsights(sellerID)
+	if len(dbInsights) > 0 {
+		s.CallInsights = append(dbInsights, s.CallInsights...)
+	}
 
-	sections, err := llm.RetentionGuide(s, pb)
+	// Get ML probability on-demand for the prompt.
+	mlProb := fetchMLProb(sellerID, s, st.MLServiceURL)
+
+	pb, _ := st.OutcomeStore.GetPlaybookEntry(s.Archetype)
+	sections, err := llm.RetentionGuide(s, pb, mlProb)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	<-st.guideCacheMu
-	st.guideCache[sellerID] = sections
-	st.guideCacheMu <- struct{}{}
+	// Persist so subsequent calls don't hit Gemini again.
+	guideBytes, _ := json.Marshal(sections)
+	st.OutcomeStore.SaveComputedState(models.ComputedState{
+		SellerID:    sellerID,
+		RiskScore:   s.RiskScore,
+		Archetype:   s.Archetype,
+		ChurnCause:  s.ChurnCause,
+		MLChurnProb: mlProb,
+		GuideJSON:   string(guideBytes),
+		ComputedAt:  time.Now().UTC().Format(time.RFC3339),
+	})
 
-	c.JSON(http.StatusOK, gin.H{"sections": sections, "cached": false})
+	c.JSON(http.StatusOK, gin.H{"sections": sections, "cached": false, "source": "on_demand"})
+}
+
+// fetchMLProb pushes features to the ML service and returns the churn probability.
+// Returns 0 (no signal) if the ML service is unavailable — guide falls back to rule-based only.
+func fetchMLProb(sellerID string, s models.Seller, mlServiceURL string) float64 {
+	features := map[string]float64{
+		"loginPct_last":     latestF(s.Metrics.LoginPct),
+		"loginPct_drop":     dropF(s.Metrics.LoginPct),
+		"blPct_last":        latestF(s.Metrics.BlConsumptionPct),
+		"blPct_drop":        dropF(s.Metrics.BlConsumptionPct),
+		"pnsPct_last":       latestF(s.Metrics.PnsPickupRatePct),
+		"pnsPct_drop":       dropF(s.Metrics.PnsPickupRatePct),
+		"lmsPct_last":       latestF(s.Metrics.LmsReplyRatePct),
+		"lmsPct_drop":       dropF(s.Metrics.LmsReplyRatePct),
+		"retailPct_last":    latestF(s.Metrics.RetailBlRecommendedPct),
+		"catalogScore":      latestF(s.Metrics.CatalogScore),
+		"cqs":               latestF(s.Metrics.Cqs),
+		"priorChurn":        boolToFloat(s.PriorChurn),
+		"daysToRenewal":     float64(s.DaysToRenewal),
+		"arr_norm":          float64(s.ARR) / 350000.0,
+		"hasCompetitor":     0,
+		"disposition":       0,
+		"churnReasonCount":  0,
+		"hasExecCommitment": 0,
+	}
+	payload, _ := json.Marshal(map[string]any{"sellerId": sellerID, "features": features})
+	http.Post(mlServiceURL+"/features", "application/json", bytes.NewReader(payload))
+
+	resp, err := http.Get(mlServiceURL + "/predict/" + sellerID)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return 0
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	var pred struct {
+		ChurnProb float64 `json:"churnProb"`
+	}
+	json.Unmarshal(body, &pred)
+	return pred.ChurnProb
 }
 
 // POST /api/v1/audio/upload
@@ -349,18 +421,26 @@ func (st *Store) RebuildPlaybook(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	// Invalidate guide cache — next guide generation will use the fresh playbook
-	<-st.guideCacheMu
-	st.guideCache = make(map[string][]llm.GuideSection)
-	st.guideCacheMu <- struct{}{}
-
 	if entries == nil {
 		entries = []models.PlaybookEntry{}
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"rebuilt": len(entries),
 		"entries": entries,
+	})
+}
+
+// POST /api/v1/batch/nightly
+func (st *Store) RunNightlyBatch(c *gin.Context) {
+	log.Printf("[batch] nightly run triggered via API")
+	count, err := batch.Run(st.Sellers, st.OutcomeStore, st.MLServiceURL, st.TranscriptsFile)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"processed": count,
+		"message":   fmt.Sprintf("Nightly batch complete. %d sellers enriched.", count),
 	})
 }
 

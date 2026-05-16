@@ -133,3 +133,18 @@ type MLPrediction struct {
 	TopFeatures  []string `json:"topFeatures"`
 	ModelVersion string   `json:"modelVersion"`
 }
+
+// ComputedState is the nightly-computed enrichment for one seller, persisted to DB.
+// RiskScore, Archetype, ChurnCause are re-derived each night from fresh call insights.
+// MLChurnProb comes from XGBoost; the LLM guide contextualises both signals together.
+type ComputedState struct {
+	SellerID         string   `json:"sellerId"`
+	RiskScore        int      `json:"riskScore"`
+	Archetype        string   `json:"archetype"`
+	ChurnCause       string   `json:"churnCause"`
+	ChurnCauseReason string   `json:"churnCauseReason"`
+	MLChurnProb      float64  `json:"mlChurnProb"`
+	MLTopFeatures    []string `json:"mlTopFeatures"`
+	GuideJSON        string   `json:"-"`
+	ComputedAt       string   `json:"computedAt"`
+}

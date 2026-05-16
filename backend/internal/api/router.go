@@ -33,6 +33,8 @@ func SetupRouter(st *Store) *gin.Engine {
 		v1.GET("/ml/prediction/:id", st.GetMLPrediction)
 		v1.GET("/ml/stats", st.GetMLStats)
 		v1.POST("/ml/train", st.TriggerTraining)
+
+		v1.POST("/batch/nightly", st.RunNightlyBatch)
 	}
 
 	return r
