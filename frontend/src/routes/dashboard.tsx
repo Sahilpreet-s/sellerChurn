@@ -69,7 +69,7 @@ export const Route = createFileRoute("/dashboard")({
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 5;
-const CHURN_CAUSES: ChurnCause[] = ["BEHAVIORAL", "EXTERNAL", "MIXED"];
+const CHURN_CAUSES: ChurnCause[] = ["Seller Disengaged", "External", "Mixed"];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -244,8 +244,8 @@ function Dashboard() {
   const tableRef = useRef<HTMLDivElement>(null);
 
   const isViewSeller = useCallback((s: Seller) => {
-    if (view === "platform") return s.churnCause === "PLATFORM_FAILURE";
-    if (view === "upsell") return s.riskScore < 55 && s.packageType !== "Maximiser" && s.churnCause !== "PLATFORM_FAILURE";
+    if (view === "platform") return s.archetype === "Platform Victim";
+    if (view === "upsell") return s.riskScore < 55 && s.packageType !== "Maximiser" && s.archetype !== "Platform Victim";
     return (CHURN_CAUSES as string[]).includes(s.churnCause);
   }, [view]);
 
@@ -361,12 +361,12 @@ function Dashboard() {
                 </Select>
                 {view === "churn" && (
                   <Select value={causeFilter} onValueChange={setCauseFilter}>
-                    <SelectTrigger className="sm:w-32"><SelectValue placeholder="Cause" /></SelectTrigger>
+                    <SelectTrigger className="sm:w-36"><SelectValue placeholder="Cause" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All causes</SelectItem>
-                      <SelectItem value="BEHAVIORAL">Behavioural</SelectItem>
-                      <SelectItem value="EXTERNAL">External</SelectItem>
-                      <SelectItem value="MIXED">Mixed</SelectItem>
+                      <SelectItem value="Seller Disengaged">Disengaged</SelectItem>
+                      <SelectItem value="External">External</SelectItem>
+                      <SelectItem value="Mixed">Mixed</SelectItem>
                     </SelectContent>
                   </Select>
                 )}

@@ -39,10 +39,10 @@ func CalcRisk(s models.RawSeller) int {
 	catalogRisk := (100 - latest(m.CatalogScore))           * 0.06
 	cqsRisk     := (100 - latest(m.Cqs))                   * 0.08
 
-	score := math.Min(100, math.Round(loginRisk+blRisk+pnsRisk+lmsRisk+retailRisk+catalogRisk+cqsRisk))
+	score := math.Min(92, math.Round(loginRisk+blRisk+pnsRisk+lmsRisk+retailRisk+catalogRisk+cqsRisk))
 
 	if s.PriorChurn {
-		score = math.Min(100, math.Round(score*1.30))
+		score = math.Min(92, math.Round(score*1.30))
 	}
 
 	// Seasonality dampener for scaffolding/construction
@@ -51,11 +51,19 @@ func CalcRisk(s models.RawSeller) int {
 		isConstruction := strings.Contains(s.Category, "Scaffold") || strings.Contains(s.Category, "Construction")
 		isSeason := lastMonth == "Mar" || lastMonth == "Apr" || lastMonth == "May"
 		if isConstruction && isSeason {
-			score = math.Min(100, math.Round(score*0.85))
+			score = math.Min(92, math.Round(score*0.85))
 		}
 	}
 
 	return int(score)
+}
+
+// IsInactiveSeller returns true when all three primary engagement signals are at or near zero.
+// These sellers are Tier 1 — flagged directly at riskScore=95 without running XGBoost or LLM.
+func IsInactiveSeller(s models.RawSeller) bool {
+	return latest(s.Metrics.LoginPct) <= 5 &&
+		latest(s.Metrics.BlConsumptionPct) <= 5 &&
+		latest(s.Metrics.PnsPickupRatePct) <= 5
 }
 
 // RiskBand returns the display band for a score.

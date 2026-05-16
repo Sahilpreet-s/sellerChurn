@@ -168,9 +168,9 @@ function AppSidebar({ onCollapse }: { onCollapse: () => void }) {
   const currentView = ((location.search as { view?: string }).view ?? "churn") as ViewType;
   const isHome = location.pathname === "/";
 
-  const churnCount = sellers.filter((s) => s.churnCause !== "PLATFORM_FAILURE").length;
-  const platformCount = sellers.filter((s) => s.churnCause === "PLATFORM_FAILURE").length;
-  const upsellCount = sellers.filter((s) => s.riskScore < 55 && s.packageType !== "Maximiser" && s.churnCause !== "PLATFORM_FAILURE").length;
+  const churnCount = sellers.filter((s) => s.archetype !== "Platform Victim").length;
+  const platformCount = sellers.filter((s) => s.archetype === "Platform Victim").length;
+  const upsellCount = sellers.filter((s) => s.riskScore < 55 && s.packageType !== "Maximiser" && s.archetype !== "Platform Victim").length;
 
   return (
     <aside className="w-[220px] shrink-0 bg-zinc-950 flex flex-col overflow-y-auto border-r border-zinc-800">
