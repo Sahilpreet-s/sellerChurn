@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"time"
 
@@ -310,40 +311,68 @@ func (st *Store) GetRetentionGuide(c *gin.Context) {
 	}
 
 	// Fallback: no nightly data yet — generate on demand.
-	// Merge DB call insights so the guide has real transcript data.
+	// Merge DB call insights so the guide has real call context.
 	dbInsights, _ := st.OutcomeStore.GetCallInsights(sellerID)
 	if len(dbInsights) > 0 {
 		s.CallInsights = append(dbInsights, s.CallInsights...)
 	}
 
-	// Get ML probability on-demand for the prompt.
-	mlProb := fetchMLProb(sellerID, s, st.MLServiceURL)
+	// Tier 1: completely inactive sellers get a static guide — no LLM call needed.
+	if scorer.IsInactiveSeller(s.RawSeller) {
+		var sections []llm.GuideSection
+		json.Unmarshal([]byte(llm.InactiveSellerGuideJSON()), &sections)
+		guideBytes, _ := json.Marshal(sections)
+		st.OutcomeStore.SaveComputedState(models.ComputedState{
+			SellerID:         sellerID,
+			RiskScore:        95,
+			Archetype:        "Seller Inactive",
+			ChurnCause:       "Seller Disengaged",
+			ChurnCauseReason: "Seller completely inactive — login, BL consumption, and PNS pickup all at or near zero.",
+			MLChurnProb:      0.95,
+			GuideJSON:        string(guideBytes),
+			ComputedAt:       time.Now().UTC().Format(time.RFC3339),
+		})
+		c.JSON(http.StatusOK, gin.H{"sections": sections, "cached": false, "source": "static_inactive"})
+		return
+	}
+
+	// Get XGBoost probability on-demand — primary risk signal.
+	mlProb, mlTopFeatures := fetchMLProbAndFeatures(sellerID, s, st.MLServiceURL)
+	riskScore := int(math.Round(mlProb * 92))
+	if riskScore == 0 {
+		riskScore = s.RiskScore // fallback to rule-based bootstrap if ML unavailable
+	}
+	s.RiskScore = riskScore
+	s.MLChurnProb = mlProb
+	s.MLTopFeatures = mlTopFeatures
 
 	pb, _ := st.OutcomeStore.GetPlaybookEntry(s.Archetype)
-	sections, err := llm.RetentionGuide(s, pb, mlProb)
+	result, err := llm.AnalyzeSeller(s, pb, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Persist so subsequent calls don't hit Gemini again.
-	guideBytes, _ := json.Marshal(sections)
+	guideBytes, _ := json.Marshal(result.RetentionGuide)
 	st.OutcomeStore.SaveComputedState(models.ComputedState{
-		SellerID:    sellerID,
-		RiskScore:   s.RiskScore,
-		Archetype:   s.Archetype,
-		ChurnCause:  s.ChurnCause,
-		MLChurnProb: mlProb,
-		GuideJSON:   string(guideBytes),
-		ComputedAt:  time.Now().UTC().Format(time.RFC3339),
+		SellerID:         sellerID,
+		RiskScore:        riskScore,
+		Archetype:        result.Archetype,
+		ChurnCause:       result.ChurnCause,
+		ChurnCauseReason: result.ChurnCauseReason,
+		MLChurnProb:      mlProb,
+		MLTopFeatures:    mlTopFeatures,
+		GuideJSON:        string(guideBytes),
+		ComputedAt:       time.Now().UTC().Format(time.RFC3339),
 	})
 
-	c.JSON(http.StatusOK, gin.H{"sections": sections, "cached": false, "source": "on_demand"})
+	c.JSON(http.StatusOK, gin.H{"sections": result.RetentionGuide, "cached": false, "source": "on_demand"})
 }
 
-// fetchMLProb pushes features to the ML service and returns the churn probability.
-// Returns 0 (no signal) if the ML service is unavailable — guide falls back to rule-based only.
-func fetchMLProb(sellerID string, s models.Seller, mlServiceURL string) float64 {
+// fetchMLProbAndFeatures pushes features to the ML service and returns churn probability + top features.
+// Returns 0, nil if the ML service is unavailable — caller falls back to rule-based score.
+func fetchMLProbAndFeatures(sellerID string, s models.Seller, mlServiceURL string) (float64, []string) {
 	features := map[string]float64{
 		"loginPct_last":     latestF(s.Metrics.LoginPct),
 		"loginPct_drop":     dropF(s.Metrics.LoginPct),
@@ -369,15 +398,16 @@ func fetchMLProb(sellerID string, s models.Seller, mlServiceURL string) float64 
 
 	resp, err := http.Get(mlServiceURL + "/predict/" + sellerID)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		return 0
+		return 0, nil
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	var pred struct {
-		ChurnProb float64 `json:"churnProb"`
+		ChurnProb   float64  `json:"churnProb"`
+		TopFeatures []string `json:"topFeatures"`
 	}
 	json.Unmarshal(body, &pred)
-	return pred.ChurnProb
+	return pred.ChurnProb, pred.TopFeatures
 }
 
 // POST /api/v1/audio/upload

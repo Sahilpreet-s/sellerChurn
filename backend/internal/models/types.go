@@ -69,7 +69,7 @@ type Seller struct {
 	RenewalDate      string  `json:"renewalDate"`
 	DaysToRenewal    int     `json:"daysToRenewal"`
 	RiskScore        int     `json:"riskScore"`
-	ChurnCause       string  `json:"churnCause"`       // BEHAVIORAL | PLATFORM_FAILURE | EXTERNAL | MIXED
+	ChurnCause       string  `json:"churnCause"`       // Seller Disengaged | External | Mixed
 	ChurnCauseReason string  `json:"churnCauseReason"`
 	Archetype        string  `json:"archetype"`
 	MLChurnProb      float64 `json:"mlChurnProb"`      // from Python XGBoost service

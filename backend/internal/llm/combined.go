@@ -8,81 +8,133 @@ import (
 	"sellerpulse/internal/models"
 )
 
-const combinedSystem = `You are an IndiaMART seller retention intelligence system with two responsibilities:
-1. Extract structured insights from today's call transcript(s) between the KAM and the seller
-2. Generate a personalized retention call guide for the KAM based on all available data
-
-Rules for call insight extraction:
-- Extract what the seller actually said, not what you infer
-- Quote the seller verbatim where a strong complaint or objection is present
-- Disposition reflects the seller's attitude toward continuing with IndiaMART
-
-Rules for the retention guide:
-- Reference the seller's EXACT metric numbers in pitches — never use generic language like "your metrics dropped"
-- Each section needs an opening pitch the KAM reads aloud, and exactly 3 concrete actions
-- If a competitor was mentioned in the transcript, address it directly in the relevant section
-- Historical playbook data shows what actually worked for this seller type — let it shape your recommendations
-- 3–5 guide sections maximum
-
-Output ONLY valid JSON matching the exact structure — no explanation, no markdown.`
-
-// CombinedResult is the single Gemini response containing both the extracted call insight
-// and the generated retention guide. Replaces two separate LLM calls in the nightly batch.
-type CombinedResult struct {
-	CallInsight    BatchInsight   `json:"callInsight"`
-	RetentionGuide []GuideSection `json:"retentionGuide"`
+// FullAnalysisResult is the single LLM response that classifies cause, archetype,
+// and generates the retention guide in one Gemini call.
+type FullAnalysisResult struct {
+	ChurnCause       string         `json:"churnCause"`
+	ChurnCauseReason string         `json:"churnCauseReason"`
+	Archetype        string         `json:"archetype"`
+	RetentionGuide   []GuideSection `json:"retentionGuide"`
 }
 
-// BatchInsight mirrors CallInsight fields that Gemini extracts from the transcript.
-type BatchInsight struct {
-	Sentiment           string   `json:"sentiment"`
-	Summary             string   `json:"summary"`
-	Issues              []string `json:"issues"`
-	Quote               string   `json:"quote"`
-	Disposition         string   `json:"disposition"`
-	CompetitorMentioned string   `json:"competitorMentioned"`
-	CommitmentByExec    string   `json:"commitmentByExec"`
+const analyzeSystem = `You are an IndiaMART seller retention intelligence system.
+
+Given a seller's profile, XGBoost churn probability, engagement metrics, and call history,
+you must output a single JSON object with four fields.
+
+CHURN CAUSE — pick exactly one:
+  "Seller Disengaged"  — seller withdrawing from platform activity (login/BL/PNS all declining, no external trigger)
+  "External"           — competitor pressure or market forces are the primary driver
+  "Mixed"              — combination of platform issues, lead-fit problems, or multiple concurrent causes
+
+ARCHETYPE — pick exactly one:
+  "Overwhelmed Starter"  — new or re-acquired seller who never properly onboarded; low catalog, high prior-churn flag
+  "ROI Doubter"          — declining ROI perception; needs concrete value demonstration with real numbers
+  "Platform Victim"      — platform issue (BL filter, PNS routing, catalog edits) causing frustration
+  "Competitor Target"    — actively comparing or negotiating with a competitor
+  "Seasonal Dip"         — decline is seasonal (scaffold/construction in Mar–May); dampen urgency
+  "Healthy"              — engaged seller showing stable or growing signals; upsell opportunity
+
+RETENTION GUIDE rules:
+  - Reference the seller's EXACT metric numbers in pitches — never generic language
+  - Each section: opening pitch the KAM reads aloud + exactly 3 concrete actions
+  - If a competitor was mentioned, address it directly in the relevant section
+  - Historical playbook data shows what actually worked — let it shape recommendations
+  - XGBoost topFeatures are the primary signal — anchor your guide around them
+  - 3–5 sections maximum
+
+Output ONLY valid JSON — no explanation, no markdown:
+{
+  "churnCause": "...",
+  "churnCauseReason": "one concise sentence explaining why",
+  "archetype": "...",
+  "retentionGuide": [
+    { "title": "...", "pitch": "...", "actions": ["...", "...", "..."] }
+  ]
+}`
+
+// inactiveGuideJSON is the pre-built static guide served to Tier 1 (completely inactive) sellers.
+// These sellers bypass all LLM and XGBoost calls.
+var inactiveGuideJSON string
+
+func init() {
+	sections := []GuideSection{
+		{
+			Title: "Urgent Executive Outreach",
+			Pitch: "This seller has gone completely dark — login, BL consumption, and PNS pickup are all at or near zero. Every day of inaction increases churn probability. The exec must reach out personally within 24 hours, not through the KAM layer.",
+			Actions: []string{
+				"Personal call from VP/Director level — not the assigned KAM — within 24 hours",
+				"Send a personalised WhatsApp message referencing the seller by name with a specific renewal date",
+				"Escalate to Account Director if no response within 48 hours",
+			},
+		},
+		{
+			Title: "Diagnose the Root Cause",
+			Pitch: "Before prescribing a solution, understand why they went silent. Ask open-ended questions — do not lead with platform features. The answer determines whether this is a platform failure, a business problem, or a competitor win.",
+			Actions: []string{
+				"Ask: 'What's changed in your business in the last 2 months that's made IndiaMART less useful for you?'",
+				"Ask: 'Are you actively using any other lead platform right now?' — do not assume",
+				"Log disposition and any competitor mention immediately after the call for retraining data",
+			},
+		},
+		{
+			Title: "Recovery Plan",
+			Pitch: "Once you know the root cause, offer a concrete recovery path — not discounts, but proof of value. Reactivate their BL credits, walk through lead quality live, and agree a 30-day milestone.",
+			Actions: []string{
+				"Offer a free BL audit call with a product specialist to unblock any platform issue",
+				"Show live leads in their category that matched their business profile in the last 30 days",
+				"Set a 30-day checkpoint: if login and BL consumption don't recover to target levels, escalate to retention deal desk",
+			},
+		},
+	}
+	b, _ := json.Marshal(sections)
+	inactiveGuideJSON = string(b)
 }
 
-// ProcessSellerBatch performs a single Gemini call that simultaneously extracts structured
-// call insights from today's transcript(s) and generates a personalized retention guide.
-// Having the raw transcript in the same context as the guide generation produces more
-// coherent output — the guide can directly reference what the seller said verbatim.
-func ProcessSellerBatch(s models.Seller, transcripts []string, pb *models.PlaybookEntry, mlChurnProb float64) (CombinedResult, error) {
-	prompt := buildCombinedPrompt(s, transcripts, pb, mlChurnProb)
-	raw, err := Call(combinedSystem, prompt, 4096)
+// InactiveSellerGuideJSON returns the pre-built static retention guide for Tier 1 sellers.
+func InactiveSellerGuideJSON() string { return inactiveGuideJSON }
+
+// AnalyzeSeller performs a single Gemini call that classifies churn cause, assigns an archetype,
+// and generates a personalized retention guide — all anchored on the XGBoost output already
+// embedded in s.MLChurnProb and s.MLTopFeatures.
+func AnalyzeSeller(s models.Seller, pb *models.PlaybookEntry, transcripts []string) (FullAnalysisResult, error) {
+	prompt := buildAnalyzePrompt(s, pb, transcripts)
+	raw, err := Call(analyzeSystem, prompt, 4096)
 	if err != nil {
-		return CombinedResult{}, err
+		return FullAnalysisResult{}, err
 	}
 
-	var result CombinedResult
+	var result FullAnalysisResult
 	if err := json.Unmarshal([]byte(raw), &result); err != nil {
-		return CombinedResult{}, fmt.Errorf("parse combined JSON: %w — raw: %s", err, raw)
+		return FullAnalysisResult{}, fmt.Errorf("parse analysis JSON: %w — raw: %s", err, raw)
 	}
 	return result, nil
 }
 
-func buildCombinedPrompt(s models.Seller, transcripts []string, pb *models.PlaybookEntry, mlChurnProb float64) string {
+func buildAnalyzePrompt(s models.Seller, pb *models.PlaybookEntry, transcripts []string) string {
 	m := s.Metrics
 	var sb strings.Builder
 
-	// Seller profile
 	sb.WriteString(fmt.Sprintf("SELLER: %s | %s | %s | %s package | ARR ₹%dk\n",
 		s.Name, s.Company, s.City, s.PackageType, s.ARR/1000))
-	sb.WriteString(fmt.Sprintf("CATEGORY: %s | ARCHETYPE: %s | CHURN CAUSE: %s\n",
-		s.Category, s.Archetype, s.ChurnCause))
-	sb.WriteString(fmt.Sprintf("RENEWAL: %d days | RULE-BASED RISK: %d/100\n",
-		s.DaysToRenewal, s.RiskScore))
-	if mlChurnProb > 0 {
-		sb.WriteString(fmt.Sprintf("ML CHURN PROBABILITY: %.0f%% (XGBoost — contextualise alongside rule-based score, not in isolation)\n",
-			mlChurnProb*100))
-	}
+	sb.WriteString(fmt.Sprintf("CATEGORY: %s | RENEWAL: %d days\n", s.Category, s.DaysToRenewal))
 	if s.PriorChurn {
-		sb.WriteString("PRIOR CHURN: This seller previously lapsed. Re-churn risk is 2.3x base rate.\n")
+		sb.WriteString("PRIOR CHURN: Yes — re-churn risk is 2.3x base rate\n")
 	}
 
-	// Engagement signals
-	sb.WriteString("\nENGAGEMENT SIGNALS (latest value → 3-month drop):\n")
+	// XGBoost output — primary anchor for the guide
+	if s.MLChurnProb > 0 {
+		sb.WriteString(fmt.Sprintf("\nXGBOOST CHURN PROBABILITY: %.0f%% (primary signal — anchor your analysis here)\n", s.MLChurnProb*100))
+		if len(s.MLTopFeatures) > 0 {
+			sb.WriteString("TOP DRIVING FEATURES:\n")
+			for _, f := range s.MLTopFeatures {
+				sb.WriteString(fmt.Sprintf("  - %s\n", f))
+			}
+		}
+	}
+
+	// Engagement snapshot
+	sb.WriteString("\nENGAGEMENT SIGNALS (latest → 3-month drop):\n")
 	sb.WriteString(fmt.Sprintf("  Login %%:        %.0f%%  (drop: %.0f%%)\n", latestF(m.LoginPct), dropF(m.LoginPct)))
 	sb.WriteString(fmt.Sprintf("  BL Consumption: %.0f%%  (drop: %.0f%%)\n", latestF(m.BlConsumptionPct), dropF(m.BlConsumptionPct)))
 	sb.WriteString(fmt.Sprintf("  PNS Pickup:     %.0f%%  (drop: %.0f%%)\n", latestF(m.PnsPickupRatePct), dropF(m.PnsPickupRatePct)))
@@ -93,8 +145,8 @@ func buildCombinedPrompt(s models.Seller, transcripts []string, pb *models.Playb
 
 	// Historical playbook
 	if pb != nil && pb.SampleSize >= 3 {
-		sb.WriteString(fmt.Sprintf("\nHISTORICAL PLAYBOOK — %d similar %s cases (%.0f%% retention rate):\n",
-			pb.SampleSize, pb.Archetype, pb.RetentionRate*100))
+		sb.WriteString(fmt.Sprintf("\nHISTORICAL PLAYBOOK — %d similar cases (%.0f%% retention rate):\n",
+			pb.SampleSize, pb.RetentionRate*100))
 		sb.WriteString(fmt.Sprintf("  KEY INSIGHT: %s\n", pb.KeyInsight))
 		if len(pb.WinningApproaches) > 0 {
 			sb.WriteString("  WHAT WORKS:\n")
@@ -110,9 +162,9 @@ func buildCombinedPrompt(s models.Seller, transcripts []string, pb *models.Playb
 		}
 	}
 
-	// Previous call history (from prior nights)
+	// Call history
 	if len(s.CallInsights) > 0 {
-		sb.WriteString("\nPREVIOUS CALL HISTORY:\n")
+		sb.WriteString("\nCALL HISTORY:\n")
 		for _, c := range s.CallInsights {
 			sb.WriteString(fmt.Sprintf("  [%s] %s — %s (%s)\n", c.Date, c.Sentiment, c.Summary, c.Disposition))
 			if c.CompetitorMentioned != "" {
@@ -127,37 +179,18 @@ func buildCombinedPrompt(s models.Seller, transcripts []string, pb *models.Playb
 		}
 	}
 
-	// Today's transcripts
-	sb.WriteString("\nTODAY'S CALL TRANSCRIPT(S):\n")
-	for i, t := range transcripts {
-		if len(transcripts) > 1 {
-			sb.WriteString(fmt.Sprintf("--- Transcript %d ---\n", i+1))
+	// Transcripts (optional — nightly batch only)
+	if len(transcripts) > 0 {
+		sb.WriteString("\nTODAY'S CALL TRANSCRIPT(S):\n")
+		for i, t := range transcripts {
+			if len(transcripts) > 1 {
+				sb.WriteString(fmt.Sprintf("--- Transcript %d ---\n", i+1))
+			}
+			sb.WriteString(t)
+			sb.WriteString("\n")
 		}
-		sb.WriteString(t)
-		sb.WriteString("\n")
 	}
 
-	// Output schema
-	sb.WriteString(`
-Return JSON with exactly this structure:
-{
-  "callInsight": {
-    "sentiment": "Positive" | "Neutral" | "Negative",
-    "summary": "1-2 sentence plain-English summary of today's interaction",
-    "issues": ["specific pain point raised, e.g. BL filters not working"],
-    "quote": "verbatim seller complaint if present, else empty string",
-    "disposition": "Willing" | "Skeptical" | "Hostile",
-    "competitorMentioned": "competitor name if mentioned, else empty string",
-    "commitmentByExec": "what the KAM promised to do, else empty string"
-  },
-  "retentionGuide": [
-    {
-      "title": "section title",
-      "pitch": "opening pitch the KAM reads aloud — must reference exact metric numbers from above",
-      "actions": ["action 1", "action 2", "action 3"]
-    }
-  ]
-}`)
-
+	sb.WriteString("\nOutput the JSON analysis now.")
 	return sb.String()
 }

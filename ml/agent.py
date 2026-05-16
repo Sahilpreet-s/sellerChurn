@@ -179,6 +179,9 @@ def node_classify(state: AnalysisState) -> dict:
         f"  PNS Pickup:     {_latest(m.get('pnsPickupRatePct', [])):.0f}%",
         f"  LMS Reply Rate: {_latest(m.get('lmsReplyRatePct', [])):.0f}%",
         f"  Retail BL %:    {_latest(m.get('retailBlRecommendedPct', [])):.0f}%  (>52% = BL filter mismatch)",
+        f"  Catalog Score:  {_latest(m.get('catalogScore', [])):.0f}  (CQS: {_latest(m.get('cqs', [])):.0f})",
+        f"  BLNI %:         {_latest(m.get('blni', [])):.0f}%",
+        f"  Active Days:    {_latest(m.get('blActiveDays', [])):.0f}",
     ])
 
     call_lines = []
@@ -248,30 +251,29 @@ XGBOOST OUTPUT:
   Top features driving score: {', '.join(state['xgb_top_features']) if state['xgb_top_features'] else 'model not yet trained'}
 
 Classify the PRIMARY churn cause — pick exactly one:
-- EXTERNAL: competitor or external market pressure is the dominant driver
-- PLATFORM_FAILURE: platform product issue (BL filter, PNS, catalog) is the main frustration
-- BEHAVIORAL: seller progressively disengaging with no clear external or product trigger
-- MIXED: only when multiple causes are genuinely of equal weight
+- External: competitor or external market pressure dominates (competitor mentioned in calls, hostile disposition, sudden metric drops around competitor promotions)
+- Seller Disengaged: seller withdrawing from platform — covers both behavioral disengagement (low login, BL unconsumed, no LMS reply, low active days) AND platform frustration (Retail BL >52% indicating filter mismatch, low PNS pickup, poor catalog/CQS score)
+- Mixed: ONLY when competitive pressure and disengagement carry genuinely equal weight — default to the stronger signal, not Mixed
 
-Factor in seasonal context: month {month} may explain metric dips for certain categories (construction Apr–Jun, textiles Oct–Dec, agriculture post-monsoon Aug–Sep).
+Factor in seasonal context: month {month} may explain dips for construction (Apr–Jun), textiles (Oct–Dec), agriculture (Aug–Sep post-monsoon).
 
-Also assign a churn risk score from 0–100:
-- 70–100: high risk — immediate intervention required
-- 40–69: medium risk — close monitoring and proactive outreach
-- 0–39: low risk — healthy engagement, routine check-in sufficient
+Assign a churn risk score 0–100 using these exact bands:
+- 55–100: High risk — immediate executive intervention required
+- 30–54: Medium risk — proactive outreach within 72 hours
+- 0–29: Low risk — routine check-in sufficient
 
 Return JSON only, no markdown:
-{{"cause": "EXTERNAL|PLATFORM_FAILURE|BEHAVIORAL|MIXED", "reason": "one sentence citing specific signals", "riskScore": 0}}"""
+{{"cause": "External|Seller Disengaged|Mixed", "reason": "one sentence citing the 2-3 strongest signals", "riskScore": 0}}"""
 
     try:
-        raw = _llm_call(prompt, max_tokens=300)
+        raw = _llm_call(prompt, max_tokens=600)
         parsed = _parse_json(raw)
-        cause = parsed.get("cause", "MIXED")
+        cause = parsed.get("cause", "Mixed")
         reason = parsed.get("reason", "")
         risk_score = int(parsed.get("riskScore", 50))
         risk_score = max(0, min(100, risk_score))
     except Exception as e:
-        cause, reason, risk_score = "MIXED", f"Classification unavailable: {e}", 50
+        cause, reason, risk_score = "Mixed", f"Classification unavailable: {e}", 50
 
     return {
         "churn_cause": cause,
@@ -308,30 +310,47 @@ def node_guide(state: AnalysisState) -> dict:
             date_exec_ctx += f"\nAssigned exec: {exec_name}"
 
     strategy_focus = {
-        "EXTERNAL": (
+        "External": (
             "Focus on switching cost and IndiaMART's established buyer network. "
             "Counter the competitor pitch with the seller's own lead history data — make it concrete. "
             "Never offer a price discount as the first move; it signals the product isn't worth full price."
         ),
-        "PLATFORM_FAILURE": (
-            "Acknowledge the platform issue directly and escalate to Product immediately. "
-            "Offer a catalog expert session and dedicated account review as a service upgrade. "
-            "The seller must feel heard before any retention argument lands."
+        "Seller Disengaged": (
+            "If Retail BL % is high (>52) or CQS is low, acknowledge the platform issue first and escalate to "
+            "Product — the seller must feel heard before any retention argument lands. "
+            "If behavioral disengagement (low login, BL unused), re-engage through ROI demonstration — "
+            "show actual leads received and response quality. Schedule an account review within 48 hours."
         ),
-        "BEHAVIORAL": (
-            "Re-engage through ROI demonstration — show actual leads received and response quality. "
-            "Schedule an account review within 48 hours. "
-            "Behavioral disengagement often signals confusion or overwhelm, not active dissatisfaction."
-        ),
-        "MIXED": (
+        "Mixed": (
             "Separate the issues — handle platform complaints and competitive threat in different parts of the call. "
             "Coordinate Sales Exec and Sales Manager; don't let one exec carry both angles alone."
         ),
+        "EXTERNAL": "Focus on switching cost and IndiaMART's buyer network. Counter competitor pitch with the seller's own lead data.",
+        "PLATFORM_FAILURE": "Acknowledge the platform issue directly. Escalate to Product. The seller must feel heard before retention arguments land.",
+        "BEHAVIORAL": "Re-engage through ROI demonstration. Schedule an account review within 48 hours.",
+        "MIXED": "Separate issues — handle platform complaints and competitive threat in different call segments.",
     }.get(cause, "")
 
     seller_id_line = s.get('name') or s.get('id', '')
     cat_line = s.get('category') or ''
     pkg_line = s.get('packageType') or ''
+
+    m = s.get("metrics", {})
+    metrics_ctx = ""
+    if m:
+        metrics_ctx = (
+            f"\nKEY METRICS:\n"
+            f"  Login: {_latest(m.get('loginPct', [])):.0f}% | "
+            f"BL Consumed: {_latest(m.get('blConsumptionPct', [])):.0f}% | "
+            f"PNS Pickup: {_latest(m.get('pnsPickupRatePct', [])):.0f}%\n"
+            f"  LMS Reply: {_latest(m.get('lmsReplyRatePct', [])):.0f}% | "
+            f"CQS: {_latest(m.get('cqs', [])):.0f} | "
+            f"Active Days: {_latest(m.get('blActiveDays', [])):.0f} | "
+            f"BLNI: {_latest(m.get('blni', [])):.0f}%"
+        )
+
+    archetype = s.get("archetype", "")
+    archetype_ctx = f"\nSeller archetype: {archetype}" if archetype else ""
 
     prompt = f"""You are a KAM retention strategy expert at IndiaMART.
 
@@ -339,13 +358,13 @@ SELLER: {seller_id_line} | {cat_line} | {pkg_line} package
 Churn cause: {cause} — {state['cause_reason']}
 XGBoost churn probability: {state['xgb_prob'] * 100:.1f}%
 Days to renewal: {s.get('daysToRenewal') or 'N/A'}
-{date_exec_ctx}
+{date_exec_ctx}{archetype_ctx}{metrics_ctx}
 {f'Last seller quote: "{last_quote}"' if last_quote else ''}
 
 Strategy direction: {strategy_focus}
 
 Generate exactly 3 retention action sections. Each must be immediately actionable for a field KAM.
-Reference the seller's specific category, package, and cause — no generic advice.
+Every action must name a specific step the KAM can take TODAY — reference the seller's actual metrics, category, package, and archetype. No generic advice.
 
 Return JSON array only, no markdown:
 [
@@ -401,7 +420,7 @@ def run_agent(seller: dict) -> dict:
         "xgb_prob": 0.0,
         "xgb_top_features": [],
         "llm_risk_score": 0,
-        "churn_cause": "MIXED",
+        "churn_cause": "Mixed",
         "cause_reason": "",
         "guide_sections": [],
         "events": [],
@@ -426,7 +445,7 @@ def stream_agent(seller: dict):
         "xgb_prob": 0.0,
         "xgb_top_features": [],
         "llm_risk_score": 0,
-        "churn_cause": "MIXED",
+        "churn_cause": "Mixed",
         "cause_reason": "",
         "guide_sections": [],
         "events": [],

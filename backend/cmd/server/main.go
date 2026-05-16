@@ -86,16 +86,33 @@ func loadSellers(path string) ([]models.Seller, error) {
 	now := time.Now().UTC()
 	sellers := make([]models.Seller, len(raw))
 	for i, r := range raw {
-		cause := classifier.ChurnCause(r)
 		days := renewalDaysTable[i%len(renewalDaysTable)]
+
+		var riskScore int
+		var churnCause, causeReason, archetype string
+		if scorer.IsInactiveSeller(r) {
+			// Tier 1: completely inactive sellers — flag immediately, skip rule-based scorer.
+			riskScore = 95
+			churnCause = "Seller Disengaged"
+			causeReason = "Seller completely inactive — login, BL consumption, and PNS pickup all at or near zero."
+			archetype = "Seller Inactive"
+		} else {
+			// Bootstrap with rule-based scorer; nightly batch overwrites with XGBoost + LLM.
+			cause := classifier.ChurnCause(r)
+			riskScore = scorer.CalcRisk(r)
+			churnCause = cause
+			causeReason = classifier.ChurnCauseReason(r, cause)
+			archetype = classifier.Archetype(r)
+		}
+
 		sellers[i] = models.Seller{
 			RawSeller:        r,
 			RenewalDate:      now.AddDate(0, 0, days).Format("2006-01-02"),
 			DaysToRenewal:    days,
-			RiskScore:        scorer.CalcRisk(r),
-			ChurnCause:       cause,
-			ChurnCauseReason: classifier.ChurnCauseReason(r, cause),
-			Archetype:        classifier.Archetype(r),
+			RiskScore:        riskScore,
+			ChurnCause:       churnCause,
+			ChurnCauseReason: causeReason,
+			Archetype:        archetype,
 		}
 	}
 

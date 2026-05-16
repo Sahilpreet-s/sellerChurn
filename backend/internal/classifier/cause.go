@@ -60,13 +60,13 @@ func ChurnCause(s models.RawSeller) string {
 
 	switch {
 	case withComp && !withPlat && !highRetail:
-		return "EXTERNAL"
-	case (withPlat || highRetail) && !withComp && !allDecline:
-		return "PLATFORM_FAILURE"
+		return "External"
 	case allDecline && !withComp && !withPlat && !highRetail:
-		return "BEHAVIORAL"
+		return "Seller Disengaged"
+	case (withPlat || highRetail) && !withComp && !allDecline:
+		return "Mixed"
 	default:
-		return "MIXED"
+		return "Mixed"
 	}
 }
 
@@ -74,27 +74,25 @@ func ChurnCause(s models.RawSeller) string {
 func ChurnCauseReason(s models.RawSeller, cause string) string {
 	m := s.Metrics
 	switch cause {
-	case "BEHAVIORAL":
+	case "Seller Disengaged":
 		return fmt.Sprintf(
 			"Login −%.0f%%, BL −%.0f%%, PNS −%.0f%% over 3 months — disengagement pattern, no platform trigger",
 			dropVal(m.LoginPct), dropVal(m.BlConsumptionPct), dropVal(m.PnsPickupRatePct),
 		)
-	case "PLATFORM_FAILURE":
-		if latestVal(m.RetailBlRecommendedPct) > 52 {
-			return fmt.Sprintf("%.0f%% of recommended BLs are retail — BL filter mismatch likely a platform config issue", latestVal(m.RetailBlRecommendedPct))
-		}
-		return "Seller reported platform issues (BL filters / PNS routing / catalog edits) on calls — escalate to Product"
-	case "EXTERNAL":
+	case "External":
 		_, comp := hasCompetitor(s.CallInsights)
 		if comp != "" {
 			return fmt.Sprintf("Competitor \"%s\" mentioned on call — pricing or feature comparison driving exit risk", comp)
 		}
 		return "Competitor pricing offer mentioned — external pressure driving exit risk"
-	case "MIXED":
+	case "Mixed":
 		if latestVal(m.RetailBlRecommendedPct) > 52 {
-			return "Combination of behavioural decline and lead-fit mismatch — requires Sales Manager coordination"
+			return fmt.Sprintf("%.0f%% of recommended BLs are retail — lead-fit mismatch may be a platform config issue; requires Sales Manager coordination", latestVal(m.RetailBlRecommendedPct))
 		}
-		return "Combination of behavioural decline and call-based complaints — requires Sales Manager coordination"
+		if hasPlatformIssue(s.CallInsights) {
+			return "Seller reported platform issues on calls — escalate to Product; Sales Manager to coordinate"
+		}
+		return "Combination of behavioural and external signals — requires Sales Manager and Exec coordination"
 	}
 	return ""
 }

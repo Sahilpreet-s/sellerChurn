@@ -128,7 +128,7 @@ function DemoPage() {
           churnProb:   partial.churnProb   ?? 0,
           topFeatures: partial.topFeatures ?? [],
           riskScore:   partial.riskScore   ?? 0,
-          churnCause:  partial.churnCause  ?? "MIXED",
+          churnCause:  partial.churnCause  ?? "Mixed",
           causeReason: partial.causeReason ?? "",
           guide:       partial.guide       ?? [],
         });

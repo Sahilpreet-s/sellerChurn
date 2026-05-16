@@ -2,7 +2,7 @@ export type MetricHistory = { month: string; value: number };
 
 export type SellerStatus = "Pending" | "Resolved";
 
-export type ChurnCause = "BEHAVIORAL" | "PLATFORM_FAILURE" | "EXTERNAL" | "MIXED";
+export type ChurnCause = "Seller Disengaged" | "External" | "Mixed";
 
 export type SellerArchetype =
   | "Overwhelmed Starter"
@@ -10,7 +10,8 @@ export type SellerArchetype =
   | "Platform Victim"
   | "Competitor Target"
   | "Seasonal Dip"
-  | "Healthy";
+  | "Healthy"
+  | "Seller Inactive";
 
 export type CallSentiment = "Negative" | "Neutral" | "Positive";
 
@@ -82,10 +83,9 @@ export const statusMeta: Record<SellerStatus, { label: string; className: string
 };
 
 export const churnCauseMeta: Record<ChurnCause, { label: string; className: string; owner: string; description: string }> = {
-  BEHAVIORAL:       { label: "Behavioural",   className: "bg-destructive/15 text-destructive border-destructive/30", owner: "Sales Exec",    description: "Seller disengaging — exec owns recovery" },
-  PLATFORM_FAILURE: { label: "Platform",      className: "bg-warning/15 text-warning border-warning/30",             owner: "Product Team",  description: "Platform issue causing seller frustration — escalate to Product" },
-  EXTERNAL:         { label: "External",      className: "bg-primary/15 text-primary border-primary/30",             owner: "Sales Manager", description: "Competitor or external pressure — loop in Sales Manager" },
-  MIXED:            { label: "Mixed",         className: "bg-muted text-muted-foreground border-border",              owner: "Sales Manager + Exec", description: "Multiple causes — requires joint call" },
+  "Seller Disengaged": { label: "Disengaged", className: "bg-destructive/15 text-destructive border-destructive/30", owner: "Sales Exec",          description: "Seller withdrawing from platform — exec owns recovery" },
+  "External":          { label: "External",   className: "bg-primary/15 text-primary border-primary/30",             owner: "Sales Manager",        description: "Competitor or market pressure — loop in Sales Manager" },
+  "Mixed":             { label: "Mixed",      className: "bg-muted text-muted-foreground border-border",             owner: "Sales Manager + Exec", description: "Multiple causes — requires joint call" },
 };
 
 export const archetypeMeta: Record<SellerArchetype, { emoji: string; description: string }> = {
@@ -95,6 +95,7 @@ export const archetypeMeta: Record<SellerArchetype, { emoji: string; description
   "Competitor Target":   { emoji: "🟦", description: "Actively comparing or negotiating with a competitor" },
   "Seasonal Dip":        { emoji: "🟩", description: "Decline is seasonal — score dampened, monitor closely" },
   "Healthy":             { emoji: "⬜", description: "Engaged seller — upsell opportunity" },
+  "Seller Inactive":     { emoji: "⬛", description: "Zero platform engagement — immediate exec intervention required" },
 };
 
 export const metricLabels: Record<keyof Seller["metrics"], string> = {
