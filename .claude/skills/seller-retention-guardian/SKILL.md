@@ -1,8 +1,12 @@
 
 ## Name: ChurnGaurd
 
-## Description: 
-Analyse B2B marketplace seller churn risk using a three-tier pipeline — Tier 1 rule-based inactive detection, Tier 2 XGBoost probability scoring across 18 behavioural features, Tier 3 LLM cause classification and KAM retention guide generation. Use when identifying which sellers are at risk of not renewing, classifying churn cause as External (competitor pressure) / Seller Disengaged (platform or behavioural) / Mixed, generating actionable retention playbooks for sales executives, or running nightly cohort triage. Signal names are IndiaMART-specific: BL = Buy-Lead, PNS = Push Notification System, LMS = Lead Management System, CQS = Content Quality Score, KAM = Key Account Manager.
+## Description:
+Self-improving seller churn prevention skill for B2B marketplace KAMs. Combines rule-based inactive detection, XGBoost probability scoring (18 signals, AUC 0.74–0.80), and LLM cause classification to produce tailored retention guides. Model retrains automatically as real KAM outcomes are logged — accuracy improves over time without manual intervention.
+
+Use when: identifying sellers at risk of non-renewal · classifying churn cause (External / Seller Disengaged / Mixed) · generating KAM call scripts and retention playbooks · triaging the nightly risk cohort.
+
+IndiaMART glossary — BL: Buy-Lead · PNS: Push Notification System · LMS: Lead Management System · CQS: Content Quality Score · KAM: Key Account Manager.
 
 # ChurnGaurd
 
@@ -165,7 +169,7 @@ Classified in priority order — first matching condition wins:
 |---|---|---|---|
 | `scripts/score.py <seller.json>` | Seller JSON file | Risk score, band, archetype, cause | No — pure Python |
 | `scripts/analyze.py <seller_id>` | Seller GLID | Full 3-tier analysis, streamed | Yes — stack running on port 8080 |
-| `scripts/extract_insights.py` | Transcript on stdin | Structured CallInsight JSON | Yes — GEMINI_API_KEY in env |
+| `scripts/extract_insights.py` | Transcript on stdin | Structured CallInsight JSON | Yes — LITELLM_API_KEY in env |
 
 ```bash
 # Offline scoring — no API needed
@@ -183,17 +187,20 @@ echo "Seller mentioned TradeIndia offer, seems skeptical" | python scripts/extra
 ## Environment
 
 ```bash
-# backend/.env — required for both Go backend and ml service
-GEMINI_API_KEY=<key>       # Tier 3 LLM calls in both Go (nightly) and Python (demo agent)
-DEEPGRAM_API_KEY=<key>     # Audio-to-transcript pipeline (optional — JSON transcripts work without it)
+LLM_PROVIDER=litellm
+LITELLM_BASE_URL=https://imllm.intermesh.net
+LITELLM_API_KEY= API_KEY
+LLM_MODEL=google/gemini-2.5-flash-lite
 
-# Optional
-PORT=8080                  # backend default
-ML_SERVICE_URL=http://ml:8001   # auto-set by Docker Compose; override for local dev
-DB_PATH=./data/sellerpulse.db   # shared between Go and Python services
+PORT=8080
+DB_PATH=./data/sellerpulse.db
+SELLERS_FILE=./data/sellers.json
+TRANSCRIPTS_FILE=./data/transcripts.json
+ML_SERVICE_URL=http://localhost:8001
+
 ```
 
-**Critical:** The ml container requires `env_file: - ./backend/.env` in `docker-compose.yml`. Without it, `GEMINI_API_KEY` is empty in the Python container and all LLM calls in the agent return HTTP 403.
+**Critical:** The ml container requires `env_file: - ./backend/.env` in `docker-compose.yml`. Without it, `LITELLM_API_KEY` is empty in the Python container and all LLM calls in the agent return HTTP 403.
 
 Full deployment guide: [deployment.md](references/deployment.md)
 
