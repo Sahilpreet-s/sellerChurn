@@ -127,8 +127,8 @@ function SellerDetail() {
       if (outcome === "Resolved") {
         setSeller(s => s ? { ...s, status: "Resolved" } : s);
       }
-    } catch {
-      setOutcomeError("Could not save outcome — check that the Go backend is running.");
+    } catch (e) {
+      setOutcomeError(e instanceof Error ? e.message : "Could not save outcome.");
     } finally {
       setOutcomeLoading(false);
     }
