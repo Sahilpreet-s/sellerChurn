@@ -1,174 +1,344 @@
-# Seller Churn Early Warning — IndiaMART
+# Seller Retention Guardian
 
-An internal-style dashboard prototype that helps IndiaMART's retention team identify paid sellers who are at risk of churning **before** their renewal date. It surfaces leading indicators (login activity, BL consumption, PNS pickups, LMS replies, catalog quality) alongside qualitative call-center insights, so a Key Account Manager can act 90 days ahead of renewal instead of reacting after a non-renewal.
+Seller Retention Guardian is a full-stack prototype for IndiaMART-style seller retention teams. It identifies paid sellers who may churn before renewal, explains the likely reason, and gives Key Account Managers a focused workspace for triage, call review, retention actions, and outcome logging.
 
-> Live preview: https://sellerchurn.lovable.app
+The repo now contains three cooperating services:
 
----
+- React/TanStack Start frontend for the dashboard and seller detail workflows.
+- Go/Gin backend for seller scoring, enrichment, REST APIs, SQLite persistence, pattern alerts, and Gemini-powered guide generation.
+- Python/FastAPI ML service for XGBoost churn probability, model stats, and training examples.
 
-## Table of Contents
+## Current Product Surface
 
-1. [Problem & Goal](#problem--goal)
-2. [What the App Does](#what-the-app-does)
-3. [Screens](#screens)
-4. [Risk Scoring Model](#risk-scoring-model)
-5. [Tech Stack](#tech-stack)
-6. [Project Structure](#project-structure)
-7. [Local Development](#local-development)
-8. [Data Model](#data-model)
-9. [Design System](#design-system)
-10. [Roadmap](#roadmap)
+- `/` - animated product landing page.
+- `/dashboard` - operational dashboard with three views:
+  - `?view=churn` for behavioural, external, and mixed churn risks.
+  - `?view=platform` for sellers whose risk is driven by platform or lead-fit issues.
+  - `?view=upsell` for lower-risk sellers that may be upgrade candidates.
+- `/seller/$sellerId` - seller detail page with:
+  - risk, renewal, package, ARR, churn cause, and archetype summary.
+  - past behaviour charts for login, BL consumption, PNS pickup, LMS reply, retail BL share, catalog score, CQS, BLNI, and active days.
+  - six-month IndiaMART leads chart.
+  - "Why flagged" explanation.
+  - call insights from seed data, uploaded transcripts, or nightly batch output.
+  - rule-based fallback guide plus AI retention guide generation.
+  - outcome logging that feeds SQLite and the ML training corpus.
 
----
+## Architecture
 
-## Problem & Goal
-
-IndiaMART earns recurring revenue from paid seller subscriptions (Silver / Gold / Platinum / Star packages). A meaningful chunk of revenue leaks every quarter through **silent churn** — sellers whose engagement has been declining for months but who only get a retention call **after** they fail to renew.
-
-The goal of this prototype is to:
-
-- Aggregate the behavioural signals that already exist in IndiaMART's stack (login %, BL consumption %, PNS pickup %, LMS reply %, % retail BLs recommended, catalog score).
-- Combine those with **call-center transcript insights** (sentiment, recurring complaints, competitor mentions).
-- Produce a single **Risk Score (0–100)** per seller and a clear action surface for the retention team.
-
----
-
-## What the App Does
-
-- **Cohort dashboard** of every paid seller renewing in the next 90 days, sortable and filterable by risk band, package, and retention status (Pending / Resolved).
-- **Per-seller deep-dive** with:
-  - Summary cards (ARR, package, renewal date, risk score).
-  - A plain-English explanation of **why** the seller was flagged.
-  - Tabbed detail view:
-    - **Past Behaviour** — line chart of the 6 leading indicators over the last 3 months. Metrics that are *not* declining are drawn in green so the retention team can immediately see what's healthy vs. what's slipping.
-    - **Call Insights** — recent transcripts from the IndiaMART exec call center: sentiment, key issues raised, verbatim quotes (e.g. competitor mentions, pricing complaints).
-    - **Retention Guide** — recommended next actions for the KAM.
-    - **IndiaMART Leads** — 6-month chart of inbound enquiries, Buy Leads consumed, and PNS calls received, so the KAM can correlate behaviour with actual lead supply.
-
----
-
-## Screens
-
-| Route | Purpose |
-|---|---|
-| `/` | Dashboard — searchable, filterable cohort of at-risk sellers |
-| `/seller/$sellerId` | Per-seller drill-down with tabs |
-
----
-
-## Risk Scoring Model
-
-The risk score is computed deterministically in `src/lib/mock-sellers.ts` (`calcRisk`). Each metric contributes two things: its **current level** and the **3-month drop**. Higher = more risk.
-
-| Signal | Current-level weight | Trend-drop weight | Why it matters |
-|---|---|---|---|
-| Login % | 0.20 | 0.50 | Disengagement is the earliest churn signal |
-| BL Consumption % | 0.20 | 0.50 | Sellers stop spending Buy Leads before they leave |
-| PNS Pickup Rate % | 0.15 | 0.40 | Missed buyer calls = lost ROI perception |
-| LMS Reply Rate % | 0.15 | 0.40 | Slow replies kill conversion |
-| % Retail BL Recommended | 0.15 | — | High retail share = poor lead-quality fit |
-| Catalog Score | 0.10 | — | Weak catalog → lower visibility |
-
-Bands: **High ≥ 55**, **Medium 30–54**, **Low < 30**.
-
----
+```text
+Frontend (TanStack Start, React 19, Vite)
+  browser/SSR API client
+        |
+        v
+Go API (Gin, :8080, /api/v1)
+  - loads seeded sellers
+  - calculates rule risk and churn cause
+  - stores outcomes, call insights, computed guides in SQLite
+  - calls Gemini for retention guides and transcript insight extraction
+  - proxies ML prediction and retraining calls
+        |
+        +---- SQLite: backend/data/sellerpulse.db
+        |
+        v
+Python ML Service (FastAPI, :8001)
+  - seeds synthetic feature snapshots
+  - trains XGBoost
+  - serves churn probability and model stats
+```
 
 ## Tech Stack
 
-- **TanStack Start v1** (React 19 SSR framework) with file-based routing
-- **Vite 7** build tool, deployed to a Cloudflare Workers-compatible runtime
-- **TypeScript** (strict)
-- **Tailwind CSS v4** via `src/styles.css` with semantic OKLCH design tokens
-- **shadcn/ui** components (Radix primitives)
-- **Recharts** for line charts
-- **Lucide** icons
+| Area | Stack |
+| --- | --- |
+| Frontend | TanStack Start, React 19, TypeScript, Vite, Tailwind CSS v4 |
+| UI | shadcn/ui primitives, Radix UI, Recharts, Lucide icons, Framer Motion |
+| Backend | Go 1.21, Gin, CORS middleware, modernc SQLite |
+| AI | Gemini 2.5 Flash via `GEMINI_API_KEY` |
+| ML | Python 3.11, FastAPI, XGBoost, scikit-learn, pandas, numpy, joblib |
+| Persistence | SQLite database shared by backend and ML service |
+| Dev/Deploy | Bun frontend workflow, Dockerfiles, Docker Compose |
 
-There is **no backend** in this prototype — all data lives in `src/lib/mock-sellers.ts` and is generated deterministically so the dashboard renders identically on server and client.
+## Repository Layout
 
----
-
-## Project Structure
-
+```text
+.
+|-- README.md
+|-- BACKEND.md                 # deeper backend architecture notes
+|-- docker-compose.yml          # three-service local stack
+|-- start.sh                    # starts ML, Go API, and frontend on a Unix shell
+|-- backend/
+|   |-- cmd/server/main.go      # Go API entry point
+|   |-- internal/api/           # Gin router and handlers
+|   |-- internal/audio/         # transcript-to-call-insight pipeline
+|   |-- internal/batch/         # nightly enrichment pipeline
+|   |-- internal/classifier/    # churn cause and archetype rules
+|   |-- internal/config/        # env loading
+|   |-- internal/llm/           # Gemini client, guide, MERP, combined prompts
+|   |-- internal/models/        # shared response/data types
+|   |-- internal/outcome/       # SQLite stores for outcomes, computed state, playbook
+|   |-- internal/patterns/      # systemic alert detection
+|   |-- internal/playbook/      # archetype playbook synthesis from outcomes
+|   |-- internal/scorer/        # deterministic risk scoring
+|   |-- data/                   # seeded sellers, transcripts, local SQLite DB
+|   |-- openapi.yaml            # API contract
+|   `-- Dockerfile
+|-- frontend/
+|   |-- src/routes/             # TanStack file routes
+|   |-- src/lib/api.ts          # frontend API client
+|   |-- src/lib/mock-sellers.ts # TypeScript types and display metadata
+|   |-- src/components/ui/      # shadcn/ui components
+|   |-- src/styles.css          # Tailwind v4 tokens and app styling
+|   |-- vite.config.ts          # TanStack/Lovable config plus API proxy
+|   |-- package.json
+|   `-- Dockerfile
+`-- ml/
+    |-- service.py              # FastAPI app
+    |-- routes.py               # health/stats/predict/features/outcomes/train
+    |-- trainer.py              # XGBoost training and prediction
+    |-- seed_data.py            # 500 synthetic labeled examples
+    |-- db.py                   # SQLite helpers
+    |-- model.joblib
+    |-- model_stats.json
+    `-- Dockerfile
 ```
-src/
-├── routes/
-│   ├── __root.tsx              # Root shell (html/head/body)
-│   ├── index.tsx               # Dashboard
-│   └── seller.$sellerId.tsx    # Per-seller drill-down (tabs + charts)
-├── components/ui/              # shadcn/ui primitives
-├── lib/
-│   ├── mock-sellers.ts         # Seller cohort + risk scoring + call insights
-│   └── utils.ts
-├── styles.css                  # Tailwind v4 + design tokens
-├── router.tsx
-└── start.ts
-```
 
----
-
-## Local Development
-
-```bash
-bun install
-bun run dev
-```
-
-The dev server runs on Vite. File-based routes in `src/routes/` are auto-registered into `src/routeTree.gen.ts` (do not edit that file by hand).
-
-Build:
-
-```bash
-bun run build
-```
-
----
+Generated or local folders such as `frontend/node_modules`, `ml/.venv`, `ml/__pycache__`, and `frontend/.tanstack` are not part of the application source.
 
 ## Data Model
 
+The backend serves enriched seller objects built from `backend/data/sellers.json`. The seed file currently contains 20 sellers, with package types such as `MDC`, `TrustSEAL`, `Maximiser`, `IM Star`, and `IM Leader`.
+
+Core seller fields:
+
 ```ts
 type Seller = {
-  id: string;                    // e.g. "S-10293"
+  id: string;
   name: string;
   company: string;
   city: string;
   category: string;
-  packageType: "Gold" | "Platinum" | "Silver" | "Star";
-  renewalDate: string;           // ISO date
-  daysToRenewal: number;
-  arr: number;                   // annual recurring revenue (INR)
+  packageType: string;
+  arr: number;
   status: "Pending" | "Resolved";
-  riskScore: number;             // 0–100
-  metrics: {
-    loginPct: MetricHistory[];
-    blConsumptionPct: MetricHistory[];
-    pnsPickupRatePct: MetricHistory[];
-    lmsReplyRatePct: MetricHistory[];
-    retailBlRecommendedPct: MetricHistory[];
-    catalogScore: MetricHistory[];
-  };
-  callInsights?: CallInsight[];
+  priorChurn: boolean;
+  renewalDate: string;
+  daysToRenewal: number;
+  riskScore: number;
+  churnCause: "BEHAVIORAL" | "PLATFORM_FAILURE" | "EXTERNAL" | "MIXED";
+  churnCauseReason: string;
+  archetype: string;
+  mlChurnProb: number;
+  mlTopFeatures: string[];
+  metrics: SellerMetrics;
+  leadsHistory: LeadsMonthData[];
+  callInsights: CallInsight[];
 };
 ```
 
-Each `CallInsight` captures one call-center interaction: date, agent, sentiment, summary, list of issues raised, and an optional verbatim quote.
+SQLite stores runtime enrichment in:
 
----
+- `outcomes` - KAM call outcomes and feature snapshots.
+- `call_insights` - extracted call/MERP/transcript insights.
+- `seller_computed` - nightly or on-demand computed risk, guide JSON, ML probability, and top features.
+- `playbook_entries` - synthesized archetype playbooks.
+- `feature_snapshots` - ML training rows seeded by the Python service and extended by real outcomes.
 
-## Design System
+## Risk Scoring
 
-All colours live as semantic tokens in `src/styles.css` using `oklch(...)`:
+Rule-based scoring lives in `backend/internal/scorer/scorer.go` and mirrors the frontend display bands:
 
-- `--background`, `--foreground`, `--primary`, `--secondary`, `--muted`, `--accent`
-- Status tokens: `--success`, `--warning`, `--destructive`
+| Signal | Current weight | Drop weight |
+| --- | ---: | ---: |
+| Login percent | 0.15 | 0.35 |
+| BL consumption percent | 0.15 | 0.35 |
+| PNS pickup percent | 0.12 | 0.30 |
+| LMS reply percent | 0.12 | 0.30 |
+| Retail BL recommended percent | 0.12 | - |
+| Catalog score | 0.06 | - |
+| Content Quality Score | 0.08 | - |
 
-Components never hard-code hex colours — they reference these tokens (e.g. `bg-warning/15 text-warning`). This keeps light/dark mode and brand tweaks single-source.
+Additional logic:
 
----
+- Prior churn multiplies the score by 1.30.
+- Construction/scaffolding sellers in Mar-May get a 0.85 seasonal dampener.
+- Risk bands are `High >= 55`, `Medium >= 30`, and `Low < 30`.
+
+Churn cause and archetype rules live in `backend/internal/classifier/cause.go`. Pattern alerts live in `backend/internal/patterns/detector.go`.
+
+## API Summary
+
+All backend endpoints are under `http://localhost:8080/api/v1`.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/sellers` | List sellers with optional `risk`, `status`, `package`, and `q` filters |
+| `GET` | `/sellers/:id` | Get one seller with DB call insights and computed state merged in |
+| `POST` | `/sellers/:id/outcome` | Log retention outcome and feature snapshot |
+| `POST` | `/sellers/:id/guide` | Return cached or newly generated AI retention guide |
+| `POST` | `/audio/upload` | Process a transcript JSON payload into a saved call insight |
+| `GET` | `/patterns` | Return systemic pattern alerts |
+| `GET` | `/stats` | Return portfolio risk counts and ARR at risk |
+| `GET` | `/playbook` | Return synthesized archetype playbook entries |
+| `POST` | `/playbook/rebuild` | Rebuild playbook entries from logged outcomes |
+| `GET` | `/ml/prediction/:id` | Proxy a seller prediction from the ML service |
+| `GET` | `/ml/stats` | Proxy model stats from the ML service |
+| `POST` | `/ml/train` | Trigger ML retraining |
+| `POST` | `/batch/nightly` | Run the nightly enrichment pipeline |
+
+The full API contract is in `backend/openapi.yaml`.
+
+ML service endpoints are under `http://localhost:8001`:
+
+- `GET /health`
+- `GET /stats`
+- `GET /predict/{seller_id}`
+- `POST /features`
+- `POST /outcomes`
+- `POST /train`
+
+## Environment Variables
+
+Backend defaults are loaded in `backend/internal/config/config.go`.
+
+```env
+PORT=8080
+GEMINI_API_KEY=your-gemini-api-key
+ML_SERVICE_URL=http://localhost:8001
+DB_PATH=./data/sellerpulse.db
+SELLERS_FILE=./data/sellers.json
+TRANSCRIPTS_FILE=./data/transcripts.json
+SAMPLE_CALLS_DIR=./data/sample_calls
+```
+
+Frontend SSR can use:
+
+```env
+VITE_API_URL=http://localhost:8080/api/v1
+```
+
+ML service defaults:
+
+```env
+DB_PATH=../backend/data/sellerpulse.db
+MODEL_PATH=./model.joblib
+STATS_PATH=./model_stats.json
+```
+
+Do not commit real API keys. Keep local secrets in ignored `.env` files or your shell environment.
+
+## Local Development
+
+### Option 1: Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Expected services:
+
+- Frontend: `http://localhost:5173`
+- Go API: `http://localhost:8080/api/v1/sellers`
+- ML service: `http://localhost:8001/stats`
+
+### Option 2: Run Services Manually
+
+Start the ML service:
+
+```bash
+cd ml
+python -m venv .venv
+.venv/bin/pip install -r requirements.txt
+DB_PATH=../backend/data/sellerpulse.db .venv/bin/python service.py
+```
+
+Start the Go API:
+
+```bash
+cd backend
+go mod download
+PORT=8080 ML_SERVICE_URL=http://localhost:8001 go run ./cmd/server
+```
+
+Start the frontend:
+
+```bash
+cd frontend
+bun install
+bun run dev
+```
+
+The frontend API client uses `VITE_API_URL` during SSR and `/api/v1` in the browser so Vite can proxy API calls.
+
+## Common Commands
+
+```bash
+# Frontend
+cd frontend
+bun run dev
+bun run build
+bun run lint
+bun run format
+
+# Backend
+cd backend
+go run ./cmd/server
+go test ./...
+
+# ML service
+cd ml
+python service.py
+python trainer.py
+
+# Full stack
+docker compose up --build
+```
+
+## Important Workflows
+
+### Outcome Logging
+
+1. User opens `/seller/$sellerId`.
+2. User logs `Resolved`, `Escalated`, or `Churned`.
+3. Go API stores the outcome in SQLite with the current feature snapshot.
+4. Go API sends the labeled feature snapshot to the ML service.
+5. Every 10 logged outcomes, the backend can rebuild the archetype playbook asynchronously.
+
+### AI Retention Guide
+
+1. Frontend calls `POST /api/v1/sellers/:id/guide`.
+2. Backend first checks `seller_computed` for a cached guide.
+3. If missing, backend builds a seller prompt from metrics, call history, playbook entries, and ML probability.
+4. Gemini returns structured guide sections.
+5. Backend stores the guide JSON for future calls.
+
+### Nightly Batch
+
+`POST /api/v1/batch/nightly` runs the batch pipeline:
+
+1. Load mock transcripts from `backend/data/transcripts.json`.
+2. Merge seed and DB call insights.
+3. Recalculate rule risk, churn cause, and archetype.
+4. Push features to the ML service and fetch churn probability.
+5. Use one Gemini call to extract transcript insight and generate the guide when transcripts exist.
+6. Save the computed state and guide into SQLite.
+
+### ML Training
+
+The ML service seeds 500 synthetic examples on startup, trains XGBoost, and writes model stats to `ml/model_stats.json`. Real KAM outcomes are appended to the same SQLite training corpus through `POST /outcomes`. Manual retraining is available through the Go proxy at `POST /api/v1/ml/train`.
+
+## Known Gaps
+
+- The frontend contains helper functions for MERP extraction and multipart audio upload, but the current Go backend exposes only JSON transcript processing at `POST /api/v1/audio/upload` and does not expose `/merp/extract`.
+- `start.sh` is written for Unix-like shells. On Windows, use Docker Compose, Git Bash/WSL, or run each service manually.
+- The checked-in seed database and ML artifacts are demo assets. Regenerate them when changing scoring features or training schema.
+- `BACKEND.md` is an architecture design note and contains aspirational modules that do not exactly match the current folder names. Use this README plus `backend/openapi.yaml` for current runtime behaviour.
 
 ## Roadmap
 
-- Wire to real IndiaMART warehouse instead of mock data
-- Push retention actions back into the CRM (mark resolved, schedule follow-up)
-- LLM-generated call summaries directly from raw transcripts
-- Cohort-level trend view (week-over-week churn risk movement)
-- Per-KAM workload view and SLA tracking
+- Align frontend package filters and TypeScript package union with the backend package names.
+- Add a backend `/merp/extract` route or remove the unused frontend API helper.
+- Make transcript upload support both JSON payloads and multipart files.
+- Add backend tests for scoring, classifier, pattern detection, and API handlers.
+- Replace synthetic training seed data with real labeled retention outcomes.
+- Add production integrations for IndiaMART warehouse data, call recordings, CRM follow-ups, and auth.
