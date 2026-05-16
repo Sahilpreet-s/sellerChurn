@@ -204,12 +204,11 @@ function LandingPage() {
 
       {/* MARQUEE STATS */}
       <Section className="border-y border-border bg-muted/30 py-10">
-        <motion.div variants={fadeUp} className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 md:grid-cols-4">
+        <motion.div variants={fadeUp} className="mx-auto grid max-w-7xl grid-cols-3 gap-8 px-6 md:grid-cols-3">
           {[
             { v: "12+", l: "Behavioural signals" },
             { v: "90d", l: "Lead time before renewal" },
             { v: "3x", l: "Faster KAM triage" },
-            { v: "97%", l: "Risk model precision" },
           ].map((s, i) => (
             <motion.div key={i} variants={fadeUp} className="text-center">
               <p className="text-4xl font-semibold tracking-tight">{s.v}</p>
