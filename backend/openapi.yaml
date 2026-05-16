@@ -1,8 +1,31 @@
 openapi: 3.0.3
 info:
   title: SellerPulse 360° API
-  description: Seller churn early warning and retention system for IndiaMART KAMs.
-  version: 1.0.0
+  description: |
+    Seller churn early warning and retention system for IndiaMART KAMs.
+
+    ## Architecture
+    The backend exposes a REST API over HTTP. All paths are prefixed `/api/v1`.
+    The nightly batch and the live agent endpoint both proxy requests to the
+    Python ML service at `:8001` which runs the XGBoost model and LangGraph agent.
+
+    ## Authentication
+    No authentication is required. For production, add JWT middleware.
+
+    ## Churn Cause Taxonomy
+    Three root causes (collapsed from the original four):
+    - **Seller Disengaged** — behavioural disengagement (low login, unconsumed BL, no LMS reply)
+      *and* platform frustration (Retail BL >52% filter mismatch, poor catalog/CQS).
+    - **External** — competitor or external market pressure dominates.
+    - **Mixed** — competitive pressure and disengagement carry genuinely equal weight.
+      Should be rare (<15 % of cases); the LLM prompt defaults to the stronger signal.
+
+    ## Risk Bands
+    - **95** — Tier 1 inactive (login ≤5 % AND BL ≤5 % AND PNS ≤5 %); field visit required
+    - **55–92** — High; immediate KAM intervention
+    - **30–54** — Medium; proactive outreach within 72 hours
+    - **<30** — Low; routine monitoring
+  version: 1.1.0
 
 servers:
   - url: http://localhost:8080/api/v1
@@ -15,6 +38,10 @@ tags:
     description: KAM retention call outcomes and feedback
   - name: Guide
     description: AI-generated retention call guides
+  - name: Agent
+    description: |
+      Live LangGraph agent — SSE streaming pipeline (XGBoost → Gemini classify → Gemini guide).
+      Accepts both synthetic seller IDs (e.g. `S-20001`) and real IndiaMART numeric GLIDs.
   - name: Audio
     description: Call transcript processing
   - name: Patterns
@@ -23,6 +50,8 @@ tags:
     description: Archetype-level retention playbook synthesized from historical outcomes
   - name: ML
     description: XGBoost churn prediction model
+  - name: Batch
+    description: Nightly enrichment pipeline for the full seller cohort
 
 paths:
 
@@ -30,7 +59,11 @@ paths:
     get:
       tags: [Sellers]
       summary: List all sellers
-      description: Returns all 20 sellers enriched with risk score, churn cause, and archetype. Supports filtering.
+      description: |
+        Returns all sellers enriched with risk score, churn cause, and archetype.
+        Nightly-computed enrichment (from `POST /batch/nightly`) is merged on top of
+        the static `sellers.json` data. Supports filtering by risk band, status,
+        package type, and free-text search.
       parameters:
         - name: risk
           in: query
@@ -52,7 +85,7 @@ paths:
             enum: [MDC, TrustSEAL, Maximiser, "IM Star", "IM Leader"]
         - name: q
           in: query
-          description: Search by seller name, company, or ID (case-insensitive)
+          description: Search by seller name, company, or ID (case-insensitive substring)
           schema:
             type: string
       responses:
@@ -69,7 +102,14 @@ paths:
     get:
       tags: [Sellers]
       summary: Get seller by ID
-      description: Returns full seller detail including call insights merged from seed data and SQLite.
+      description: |
+        Returns full seller detail including call insights merged from seed data and SQLite.
+        Nightly-computed enrichment (riskScore, archetype, churnCause, mlChurnProb,
+        mlTopFeatures) is merged when available.
+
+        **Numeric GLIDs:** If `id` is a numeric string (a real IndiaMART GLID), the handler
+        fetches live scorecard data from the IndiaMART data warehouse instead of looking up
+        the in-memory seller list.
       parameters:
         - name: id
           in: path
@@ -77,9 +117,12 @@ paths:
           schema:
             type: string
             example: S-20001
+          description: |
+            Seller ID. Use alphanumeric IDs like `S-20001` for synthetic demo sellers.
+            Use a numeric GLID to fetch live IndiaMART data.
       responses:
         '200':
-          description: Seller detail
+          description: Seller detail with merged call insights and computed enrichment
           content:
             application/json:
               schema:
@@ -92,12 +135,14 @@ paths:
       tags: [Outcomes]
       summary: Log retention call outcome
       description: |
-        Saves the result of a KAM retention call. Captures both the outcome label
+        Saves the result of a KAM retention call. Captures the outcome label
         (for ML training) and structured executive feedback (disposition, churn reasons,
-        competitor intelligence) that metrics alone cannot provide. Executive feedback
-        fields (execCommitment, churnReasons, disposition) are stored with the seller's
-        archetype and feed into the playbook synthesis — every logged outcome makes
-        future retention guides smarter.
+        competitor intelligence) that engagement metrics alone cannot provide.
+
+        **Side effects (asynchronous):**
+        - Sends the feature snapshot to the ML service corpus (fire-and-forget goroutine).
+        - Rebuilds the playbook via Gemini after every 10th logged outcome.
+        - Updates the seller's in-memory status to `Resolved` when outcome is `Resolved`.
       parameters:
         - name: id
           in: path
@@ -113,18 +158,18 @@ paths:
               $ref: '#/components/schemas/OutcomeRequest'
             example:
               outcome: Escalated
-              notes: Very frustrated, threatening to leave
+              notes: Very frustrated, threatening to leave over BL filter issue
               disposition: Hostile
               churnReasons:
-                - LEAD_QUALITY
-                - COMPETITOR_SWITCH
-              competitorMentioned: IndiaTrade
+                - "BL filters not working"
+                - "Drop in enquiries"
+              competitorMentioned: TradeIndia
               execCommitment: Escalate BL filter issue to product team by Friday
               followUpDate: "2026-05-22"
               customReason: Also exploring Alibaba B2B
       responses:
         '200':
-          description: Outcome logged with ML training progress
+          description: Outcome logged with ML training progress indicator
           content:
             application/json:
               schema:
@@ -137,11 +182,16 @@ paths:
   /sellers/{id}/guide:
     post:
       tags: [Guide]
-      summary: Generate AI retention call guide
+      summary: Get AI retention guide (on-demand or cached)
       description: |
-        Calls Gemini 2.5 Flash with the seller's full profile and returns a personalized
-        retention call guide with talking points, pitch scripts, and recommended actions.
-        Response is cached per seller after first generation.
+        Returns a personalised 3-section retention guide for the seller.
+
+        **Resolution order:**
+        1. If a nightly-computed guide exists in SQLite → returns it immediately (`cached: true`, `source: "nightly_batch"`).
+        2. If the seller is Tier 1 inactive (login ≤5 %, BL ≤5 %, PNS ≤5 %) → returns a static guide without an LLM call (`source: "static_inactive"`).
+        3. Otherwise → calls XGBoost for the churn probability, then Gemini for the guide, persists the result (`source: "on_demand"`).
+
+        The Gemini call takes ~15–20 s on first request. Result is cached per seller after generation.
       parameters:
         - name: id
           in: path
@@ -161,14 +211,73 @@ paths:
         '500':
           description: Gemini API error or key not configured
 
+  /sellers/{id}/agent:
+    get:
+      tags: [Agent]
+      summary: Stream live LangGraph analysis (SSE)
+      description: |
+        Runs the full three-tier pipeline on-demand for one seller and streams progress
+        events via Server-Sent Events (SSE). The Go backend proxies the SSE stream from
+        the Python ML service directly to the client.
+
+        **Pipeline nodes (one SSE event each):**
+        1. `xgboost` — XGBoost prediction (<1 ms); emits churn probability and top features.
+        2. `classify` — Gemini cause classification (~5–10 s); emits churn cause, reason, and LLM risk score.
+        3. `guide` — Gemini guide generation (~10–15 s); emits the 3-section retention guide.
+        4. `done` — Signals stream completion.
+
+        **Numeric GLIDs:** If `id` is a numeric string, the handler fetches live scorecard data
+        (including monthly trend, product health, and date context) from the IndiaMART data
+        warehouse and passes it to the Python agent as a `liveContext` block. This enables
+        correct partial-month data interpretation.
+
+        Each event is a raw JSON object written to the stream as a line. Clients should
+        parse each line independently.
+
+        **Response headers:**
+        ```
+        Content-Type: text/event-stream
+        Cache-Control: no-cache
+        Connection: keep-alive
+        X-Accel-Buffering: no
+        ```
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: S-20001
+          description: |
+            Seller ID or numeric GLID. Alphanumeric IDs use in-memory synthetic sellers;
+            numeric IDs fetch live IndiaMART data.
+      responses:
+        '200':
+          description: |
+            SSE stream. Each line is a JSON-encoded `AgentEvent` object.
+            The stream ends after the `done` event.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/AgentEvent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: Python ML service unreachable
+
   /audio/upload:
     post:
       tags: [Audio]
       summary: Process call transcript
       description: |
-        Accepts a call transcript and runs it through Gemini to extract a structured
-        CallInsight — sentiment, issues, competitor mentions, exec commitments, and
-        seller disposition. Saved to SQLite and returned.
+        Accepts a raw call transcript and runs it through Gemini to extract a structured
+        `CallInsight` — sentiment, disposition, issues, competitor mentions, exec commitments,
+        and the most revealing seller quote. The insight is saved to SQLite and returned.
+
+        Known issue categories (use exact strings when they apply):
+        `"BL filters not working"`, `"Catalog edits rejected"`, `"PNS routing"`,
+        `"Drop in enquiries"`, `"Lead quality dropped"`, `"Low BL"`, `"Pricing"`,
+        `"PNS quality"`, `"Renewal cost"`, `"Competition"`.
       requestBody:
         required: true
         content:
@@ -181,11 +290,11 @@ paths:
               durationMin: 12
               transcript: |
                 Exec: Hi Arjun, calling about your renewal in 38 days.
-                Seller: Honestly not happy. Leads are all retail buyers.
-                Thinking of switching to IndiaTrade.
+                Seller: Honestly not happy. The leads are all retail buyers, not wholesale.
+                I'm thinking of switching to TradeIndia.
       responses:
         '200':
-          description: Extracted call insight
+          description: Extracted call insight saved to SQLite
           content:
             application/json:
               schema:
@@ -193,16 +302,19 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
-          description: Gemini extraction error
+          description: Gemini extraction error or GEMINI_API_KEY not set
 
   /patterns:
     get:
       tags: [Patterns]
       summary: Get systemic pattern alerts
       description: |
-        Returns pattern alerts detected across all sellers at startup.
-        Identifies systemic issues affecting multiple sellers — lead-fit mismatches,
-        seasonal dips, shared platform failures, and prior churn cohorts.
+        Returns cohort-level pattern alerts computed at server startup.
+        Identifies systemic issues affecting multiple sellers — BL filter mismatches
+        (PLATFORM), seasonal dips (SEASONAL), lead-fit issues (LEAD_FIT).
+
+        Unlike per-seller risk scores, pattern alerts surface problems that affect
+        whole segments and require Product or Operations team action, not individual KAM calls.
       responses:
         '200':
           description: List of pattern alerts
@@ -216,8 +328,10 @@ paths:
   /stats:
     get:
       tags: [Sellers]
-      summary: Get portfolio-level stats
-      description: Returns high-level counts by risk band and total ARR at risk.
+      summary: Get portfolio-level statistics
+      description: |
+        Returns high-level counts by risk band, total ARR at risk (from High-risk sellers),
+        and the date of the next seller renewal in the cohort.
       responses:
         '200':
           description: Portfolio statistics
@@ -231,10 +345,12 @@ paths:
       tags: [Playbook]
       summary: Get all playbook entries
       description: |
-        Returns synthesized retention playbook entries for every archetype that has
-        enough historical outcomes. Each entry contains winning approaches, failed
-        approaches, a key insight, and explicit do-not-dos — all derived from past
-        KAM call outcomes via Gemini synthesis.
+        Returns Gemini-synthesised retention playbook entries for every archetype with
+        enough historical outcomes (minimum 3). Each entry contains winning approaches,
+        failed approaches, a key insight, and explicit do-not-dos — all derived from
+        accumulated KAM call outcomes.
+
+        Returns an empty array if no outcomes have been logged yet.
       responses:
         '200':
           description: List of playbook entries (one per archetype)
@@ -251,10 +367,14 @@ paths:
       summary: Rebuild playbook from latest outcomes
       description: |
         Triggers Gemini to re-synthesize playbook entries from all labeled outcomes
-        in the database. Groups outcomes by seller archetype, sends each group to
-        Gemini, and upserts the resulting entry. Guide cache is invalidated so the
-        next guide generation uses the fresh playbook. Runs sequentially across
-        archetypes to respect Gemini rate limits (~1 min for 5 archetypes).
+        in SQLite. Groups outcomes by seller archetype, sends each group to Gemini,
+        and upserts the resulting entry. Runs sequentially across archetypes to respect
+        Gemini rate limits (~1 min for 6 archetypes).
+
+        This is also triggered automatically: at the end of every nightly batch run
+        and after every 10th logged outcome.
+
+        Archetypes with fewer than 3 outcomes are skipped.
       responses:
         '200':
           description: Rebuild result with count and updated entries
@@ -266,7 +386,7 @@ paths:
                   rebuilt:
                     type: integer
                     description: Number of archetype entries successfully synthesized
-                    example: 5
+                    example: 4
                   entries:
                     type: array
                     items:
@@ -277,10 +397,13 @@ paths:
   /ml/prediction/{id}:
     get:
       tags: [ML]
-      summary: Get ML churn prediction for a seller
+      summary: Get XGBoost churn prediction for a seller
       description: |
-        Returns XGBoost churn probability (0–1) and top 3 features driving the prediction.
-        Requires the Python ML service on :8001 to be running.
+        Returns the XGBoost churn probability (0–1) and the top 3 features driving
+        the prediction. The probability is multiplied by 92 to produce `mlRiskScore`
+        in the seller object (the rule-based score ceiling is also 92).
+
+        Requires the Python ML service on `:8001` to be running.
       parameters:
         - name: id
           in: path
@@ -290,7 +413,7 @@ paths:
             example: S-20001
       responses:
         '200':
-          description: ML prediction result
+          description: XGBoost prediction result
           content:
             application/json:
               schema:
@@ -301,8 +424,10 @@ paths:
   /ml/stats:
     get:
       tags: [ML]
-      summary: Get ML model statistics
-      description: Returns current model AUC, training example count, and feature importances.
+      summary: Get XGBoost model statistics
+      description: |
+        Returns current model AUC, training example count, last trained timestamp,
+        and per-feature importances. Reads from `ml/model_stats.json` on the ML service.
       responses:
         '200':
           description: Model statistics
@@ -318,11 +443,18 @@ paths:
       tags: [ML]
       summary: Trigger XGBoost retraining
       description: |
-        Manually triggers retraining on all labeled outcomes collected so far.
-        Model is only swapped if new AUC improves by more than 1% over current model.
+        Reads all labeled `feature_snapshots` from SQLite and retrains the XGBoost model.
+        The model is saved to disk only if the new AUC exceeds the current model AUC
+        by more than 0.01 (anti-regression guard).
+
+        Minimum 50 labeled examples required; returns an error if fewer exist.
+
+        The training corpus grows automatically as KAMs log outcomes via
+        `POST /sellers/:id/outcome` — each logged outcome sends a feature snapshot
+        to the ML service asynchronously.
       responses:
         '200':
-          description: Training result with new AUC
+          description: Training result. `swapped: true` means the new model replaced the old one.
           content:
             application/json:
               schema:
@@ -330,12 +462,54 @@ paths:
         '503':
           description: ML service unavailable
 
+  /batch/nightly:
+    post:
+      tags: [Batch]
+      summary: Run nightly enrichment pipeline
+      description: |
+        Runs the full three-tier pipeline for every unresolved seller and persists
+        the results to the `seller_computed` SQLite table. After this runs, the dashboard
+        loads pre-computed risk scores and guides without live LLM calls.
+
+        **Pipeline per seller:**
+        1. Skip if `status = Resolved`.
+        2. **Tier 1:** If login ≤5 % AND BL ≤5 % AND PNS ≤5 % → assign `riskScore=95`, save static guide, skip XGBoost/LLM.
+        3. Build 18-feature vector → push to ML service → fetch XGBoost probability.
+        4. Call `run_agent()` (synchronous LangGraph) → persist churnCause, causeReason, guide.
+        5. After all sellers, rebuild the playbook asynchronously.
+
+        **Rate limiting:** A 13-second pause between Gemini calls keeps usage under the
+        free-tier 5 req/min limit. Approximate timing:
+        - 100 sellers (10 % inactive): ~20 minutes
+        - 1 000 sellers (10 % inactive): ~3.25 hours
+
+        With a paid Gemini key (1 000 RPM), reduce `batchDelay` in `batch/nightly.go`
+        to 0.1 s — 1 000 sellers complete in under 2 minutes.
+      responses:
+        '200':
+          description: Batch complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  processed:
+                    type: integer
+                    description: Number of sellers successfully enriched
+                    example: 18
+                  message:
+                    type: string
+                    example: "Nightly batch complete. 18 sellers enriched."
+        '500':
+          description: Batch pipeline error
+
 components:
 
   schemas:
 
     MetricHistory:
       type: object
+      description: One month's reading for a single engagement signal.
       properties:
         month:
           type: string
@@ -346,48 +520,60 @@ components:
 
     SellerMetrics:
       type: object
+      description: 3-month time-series for each engagement signal (oldest → newest).
       properties:
         loginPct:
           type: array
+          description: Login % per month — percentage of business days the seller logged in
           items:
             $ref: '#/components/schemas/MetricHistory'
         blConsumptionPct:
           type: array
+          description: BL Consumption % — Buy-Leads opened and acted on out of total allocated
           items:
             $ref: '#/components/schemas/MetricHistory'
         pnsPickupRatePct:
           type: array
+          description: PNS Pickup Rate % — automated push-notification calls answered
           items:
             $ref: '#/components/schemas/MetricHistory'
         lmsReplyRatePct:
           type: array
+          description: LMS Reply Rate % — seller replies to BL inquiries via the platform
           items:
             $ref: '#/components/schemas/MetricHistory'
         retailBlRecommendedPct:
           type: array
+          description: |
+            Retail BL Recommended % — percentage of BLs classified as "retail" (consumer)
+            rather than "wholesale" (B2B). Above 52 % indicates a BL filter mismatch
+            (Platform Victim pattern); escalate to Product, not the seller.
           items:
             $ref: '#/components/schemas/MetricHistory'
         catalogScore:
           type: array
+          description: Catalog Score (0–100) — listing quality, completeness, category accuracy
           items:
             $ref: '#/components/schemas/MetricHistory'
         cqs:
           type: array
+          description: Content Quality Score (0–100) — description richness, keyword density, image quality
           items:
             $ref: '#/components/schemas/MetricHistory'
         blni:
           type: array
-          description: Buy Lead Not Interested % per month (blni_count / bl_cons * 100)
+          description: Buy Lead Not Interested % per month (blni_count / bl_cons × 100)
           items:
             $ref: '#/components/schemas/MetricHistory'
         blActiveDays:
           type: array
-          description: Days per month the seller consumed at least one buy lead
+          description: Days per month the seller consumed at least one Buy Lead
           items:
             $ref: '#/components/schemas/MetricHistory'
 
     LeadsMonthData:
       type: object
+      description: One month of IndiaMART lead volume and consumption data.
       properties:
         month:
           type: string
@@ -414,11 +600,12 @@ components:
           example: 4
         blLapsed:
           type: integer
-          description: Buy lead credits that lapsed unused
+          description: Buy Lead credits that lapsed unused
           example: 18
 
     CallInsight:
       type: object
+      description: Structured extraction from a KAM call recording or transcript.
       properties:
         id:
           type: string
@@ -441,26 +628,40 @@ components:
           enum: [Positive, Neutral, Negative]
         summary:
           type: string
+          description: 1–2 sentence summary of the call
         issues:
           type: array
+          description: |
+            Issue categories identified on the call. Known categories:
+            "BL filters not working", "Catalog edits rejected", "PNS routing",
+            "Drop in enquiries", "Lead quality dropped", "Low BL", "Pricing",
+            "PNS quality", "Renewal cost", "Competition"
           items:
             type: string
         quote:
           type: string
+          description: Most revealing verbatim quote from the seller
         disposition:
           type: string
           enum: [Willing, Skeptical, Hostile]
+          description: |
+            Seller's attitude toward IndiaMART on this call.
+            Encoded as 0 / 0.5 / 1.0 for XGBoost feature `disposition`.
         competitorMentioned:
           type: string
-          example: IndiaTrade
+          description: Competitor name if mentioned, otherwise empty string
+          example: TradeIndia
         commitmentByExec:
           type: string
+          description: Specific commitment made by the KAM on this call
         source:
           type: string
           enum: [AUDIO, MERP, MANUAL]
+          description: How the insight was captured
 
     Seller:
       type: object
+      description: Fully enriched seller object served to the frontend.
       properties:
         id:
           type: string
@@ -489,6 +690,9 @@ components:
           enum: [Pending, Resolved, Escalated, Churned]
         priorChurn:
           type: boolean
+          description: |
+            True if this seller has churned and been re-acquired at least once.
+            Triggers a 1.30× risk score multiplier (observed 1.28× in cohort data).
         renewalDate:
           type: string
           format: date
@@ -499,34 +703,59 @@ components:
         riskScore:
           type: integer
           minimum: 0
-          maximum: 100
+          maximum: 95
+          description: |
+            Rule-based risk score (0–92 for active sellers; 95 reserved for Tier 1 inactives).
+            After nightly batch, may be overridden by `round(mlChurnProb × 92)`.
           example: 87
         churnCause:
           type: string
-          enum: [BEHAVIORAL, PLATFORM_FAILURE, EXTERNAL, MIXED]
+          enum: ["Seller Disengaged", "External", "Mixed"]
+          description: |
+            Root cause of churn risk (3-category taxonomy).
+            "Seller Disengaged" covers both behavioural disengagement and platform frustration.
         churnCauseReason:
           type: string
+          description: One-sentence explanation citing the 2–3 strongest signals
         archetype:
           type: string
-          enum: [Overwhelmed Starter, ROI Doubter, Platform Victim, Competitor Target, Seasonal Dip, Healthy]
+          enum:
+            - Healthy
+            - Overwhelmed Starter
+            - ROI Doubter
+            - Platform Victim
+            - Competitor Target
+            - Seasonal Dip
+            - Seller Inactive
+          description: |
+            Seller archetype derived by `classifier/cause.go`. Detection priority (highest first):
+            Healthy → Overwhelmed Starter → Competitor Target → Platform Victim → Seasonal Dip → ROI Doubter.
+            "Seller Inactive" is assigned only to Tier 1 inactives (login ≤5 % AND BL ≤5 % AND PNS ≤5 %).
         mlChurnProb:
           type: number
           minimum: 0
           maximum: 1
+          description: XGBoost churn probability (0–1) from the Python ML service
           example: 0.9943
         mlTopFeatures:
           type: array
+          description: Top 3 XGBoost feature names driving the ML score
           items:
             type: string
+          example: [loginPct_drop, blPct_drop, hasCompetitor]
         metrics:
           $ref: '#/components/schemas/SellerMetrics'
         leadsHistory:
           type: array
-          description: 6-month IndiaMART lead volume and consumption data
+          description: Up to 6 months of IndiaMART lead volume and consumption data
           items:
             $ref: '#/components/schemas/LeadsMonthData'
         callInsights:
           type: array
+          description: |
+            Call insights merged from seed data and SQLite (DB insights prepended,
+            seed insights appended). Most recent insight determines `hasCompetitor`
+            and `disposition` XGBoost features.
           items:
             $ref: '#/components/schemas/CallInsight'
 
@@ -537,87 +766,111 @@ components:
         outcome:
           type: string
           enum: [Resolved, Escalated, Churned]
+          description: Result of the KAM retention call
+        notes:
+          type: string
+          description: Free-text notes from the KAM
+        disposition:
+          type: string
+          enum: [Willing, Skeptical, Hostile]
+          description: Seller's attitude during the call (encoded 0/0.5/1.0 for ML)
+        churnReasons:
+          type: array
+          description: |
+            Specific issues raised by the seller. Use the known issue categories where applicable:
+            "BL filters not working", "Catalog edits rejected", "PNS routing",
+            "Drop in enquiries", "Lead quality dropped", "Low BL", "Pricing",
+            "PNS quality", "Renewal cost", "Competition".
+            Free-form strings are also accepted.
+            The count is normalised by 9 to produce the `churnReasonCount` XGBoost feature.
+          items:
+            type: string
+          example: ["Low BL", "Drop in enquiries"]
+        competitorMentioned:
+          type: string
+          description: Competitor name if the seller raised competitive alternatives
+          example: TradeIndia
+        execCommitment:
+          type: string
+          description: |
+            Specific commitment made by the KAM on this call.
+            Presence sets `hasExecCommitment=1` in the XGBoost feature vector —
+            a protective factor that reduces predicted churn probability.
+        followUpDate:
+          type: string
+          format: date
+          example: "2026-05-22"
+        customReason:
+          type: string
+          description: Any additional context not covered by the predefined reason categories
+
+    OutcomeResponse:
+      type: object
+      properties:
+        record:
+          $ref: '#/components/schemas/OutcomeRecord'
+        totalOutcomes:
+          type: integer
+          description: Total labeled outcomes in the training corpus after this write
+          example: 501
+        nextRetrainAt:
+          type: integer
+          description: Training corpus size at which the next scheduled retrain fires
+          example: 5000
+        message:
+          type: string
+          example: "Outcome logged. 501 training examples collected."
+
+    OutcomeRecord:
+      type: object
+      description: Persisted outcome record returned after logging.
+      properties:
+        id:
+          type: integer
+          example: 42
+        sellerId:
+          type: string
+          example: S-20001
+        outcome:
+          type: string
+          enum: [Resolved, Escalated, Churned]
         notes:
           type: string
         disposition:
           type: string
-          enum: [Willing, Skeptical, Hostile]
         churnReasons:
           type: array
           items:
             type: string
-            enum:
-              - LEAD_QUALITY
-              - PRICING
-              - COMPETITOR_SWITCH
-              - ROI_NOT_VISIBLE
-              - PLATFORM_ISSUE
-              - LOW_ENGAGEMENT
-              - BUSINESS_CLOSURE
-              - SUPPORT_QUALITY
-              - CATALOG_ISSUE
         competitorMentioned:
           type: string
         execCommitment:
           type: string
         followUpDate:
           type: string
-          format: date
         customReason:
           type: string
-
-    OutcomeResponse:
-      type: object
-      properties:
-        record:
-          type: object
-          properties:
-            id:
-              type: integer
-            sellerId:
-              type: string
-            outcome:
-              type: string
-            notes:
-              type: string
-            disposition:
-              type: string
-            churnReasons:
-              type: array
-              items:
-                type: string
-            competitorMentioned:
-              type: string
-            execCommitment:
-              type: string
-            followUpDate:
-              type: string
-            customReason:
-              type: string
-            riskScoreAtTime:
-              type: integer
-            loggedAt:
-              type: string
-        totalOutcomes:
+        riskScoreAtTime:
           type: integer
-          example: 501
-        nextRetrainAt:
-          type: integer
-          example: 5000
-        message:
+          description: The seller's rule-based risk score at the moment the outcome was logged
+        loggedAt:
           type: string
-          example: Outcome logged. 501 training examples collected.
+          format: date-time
 
     GuideSection:
       type: object
+      description: One section of a retention call guide.
       properties:
         title:
           type: string
-          example: Opening & Understanding Your Needs
+          description: Short action title
+          example: "Acknowledge Platform Pain First"
         pitch:
           type: string
+          description: 1–2 sentence opening the KAM reads aloud on the call
         actions:
           type: array
+          description: Specific, immediately actionable steps for the KAM
           items:
             type: string
 
@@ -626,10 +879,65 @@ components:
       properties:
         sections:
           type: array
+          description: Exactly 3 retention action sections
           items:
             $ref: '#/components/schemas/GuideSection'
         cached:
           type: boolean
+          description: True if the guide was served from the SQLite cache without a Gemini call
+        source:
+          type: string
+          enum: [nightly_batch, on_demand, static_inactive]
+          description: |
+            - `nightly_batch` — pre-generated by the nightly batch run (fastest)
+            - `on_demand` — generated live by a Gemini call (~15–20 s)
+            - `static_inactive` — static guide for Tier 1 inactive sellers (no LLM call)
+        computedAt:
+          type: string
+          format: date-time
+          description: When this guide was generated (present for nightly_batch source)
+          example: "2026-05-16T02:30:00Z"
+
+    AgentEvent:
+      type: object
+      description: |
+        A single SSE event yielded by the LangGraph agent stream.
+        One event per completed node; the stream ends with `step: "done"`.
+      properties:
+        step:
+          type: string
+          enum: [xgboost, classify, guide, done]
+          description: Which pipeline node completed
+        label:
+          type: string
+          description: Human-readable status message
+          example: "Risk scored with XGBoost"
+        churnProb:
+          type: number
+          description: (xgboost step) XGBoost churn probability 0–1
+          example: 0.82
+        topFeatures:
+          type: array
+          description: (xgboost step) Top 3 feature names driving the score
+          items:
+            type: string
+          example: [loginPct_drop, blPct_drop, disposition]
+        churnCause:
+          type: string
+          description: (classify step) Classified root cause
+          enum: ["Seller Disengaged", "External", "Mixed"]
+        causeReason:
+          type: string
+          description: (classify step) One sentence explaining the cause
+        riskScore:
+          type: integer
+          description: (classify step) LLM-assigned risk score 0–100
+          example: 72
+        guide:
+          type: array
+          description: (guide step) Exactly 3 retention guide sections
+          items:
+            $ref: '#/components/schemas/GuideSection'
 
     AudioUploadRequest:
       type: object
@@ -640,65 +948,93 @@ components:
           example: S-20001
         agent:
           type: string
+          description: Name of the KAM on the call. Defaults to "Unknown Agent" if omitted.
           example: Rahul Sharma
         durationMin:
           type: integer
+          description: Call duration in minutes (0 if unknown)
           example: 12
         transcript:
           type: string
-          description: Full call transcript text
+          description: Full call transcript text (verbatim or summarised)
 
     PatternAlert:
       type: object
+      description: A systemic issue affecting multiple sellers, requiring team-level action.
       properties:
         id:
           type: string
         type:
           type: string
-          enum: [PLATFORM, SEASONAL, LEAD_FIT, PRIOR_CHURN]
+          enum: [PLATFORM, SEASONAL, LEAD_FIT]
+          description: |
+            - `PLATFORM` — BL filter mismatch or platform failure affecting a seller cohort
+            - `SEASONAL` — Seasonal engagement drop for a category (e.g. construction in Mar–May)
+            - `LEAD_FIT` — Systematic lead-quality mismatch for a category
         severity:
           type: string
           enum: [High, Medium]
         title:
           type: string
+          example: "BL filter mismatch — Construction Materials cohort"
         narrative:
           type: string
+          description: 1–2 sentence explanation of the pattern and recommended action
         affectedIds:
           type: array
+          description: Seller IDs in this pattern cohort
           items:
             type: string
         affectedCount:
           type: integer
+          example: 6
 
     StatsResponse:
       type: object
       properties:
         total:
           type: integer
+          description: Total sellers in the cohort
           example: 20
         high:
           type: integer
+          description: Sellers with riskScore ≥ 55
           example: 12
         medium:
           type: integer
+          description: Sellers with riskScore 30–54
           example: 3
         low:
           type: integer
+          description: Sellers with riskScore < 30
           example: 5
         arrAtRisk:
           type: integer
+          description: Total ARR (INR) from High-risk sellers
           example: 1232000
         cohortDate:
           type: string
           format: date
+          description: Date of the earliest upcoming renewal in the cohort
           example: "2026-06-22"
 
     PlaybookEntry:
       type: object
+      description: |
+        Gemini-synthesised retention playbook for one seller archetype.
+        Generated from accumulated historical KAM outcomes. Requires at least 3 outcomes
+        per archetype before Gemini synthesis runs.
       properties:
         archetype:
           type: string
-          enum: [Overwhelmed Starter, ROI Doubter, Platform Victim, Competitor Target, Seasonal Dip, Healthy]
+          enum:
+            - Healthy
+            - Overwhelmed Starter
+            - ROI Doubter
+            - Platform Victim
+            - Competitor Target
+            - Seasonal Dip
+            - Seller Inactive
           example: ROI Doubter
         sampleSize:
           type: integer
@@ -708,16 +1044,16 @@ components:
           type: number
           minimum: 0
           maximum: 1
-          description: Fraction of cases in this archetype group that were retained
+          description: Fraction of cases in this archetype that were retained (Resolved / total)
           example: 0.57
         winningApproaches:
           type: array
-          description: Exec commitments and approaches that correlated with Resolved outcomes
+          description: Commitments and approaches that appeared in Resolved outcomes
           items:
             type: string
           example:
-            - "Calculate ROI on the call using seller's own numbers and share via WhatsApp"
-            - "Upgrade BL filter criteria immediately and schedule a 30-day quality review"
+            - "Calculate ROI on the call using the seller's own enquiry data and share via WhatsApp"
+            - "Adjust BL filter criteria immediately and schedule a 30-day lead quality review"
         failedApproaches:
           type: array
           description: Approaches that appeared in Churned outcomes or showed no effect
@@ -725,7 +1061,7 @@ components:
             type: string
           example:
             - "Generic discount without addressing the lead quality root cause"
-            - "Vague promises that leads will improve next quarter"
+            - "Vague reassurances that leads will improve next quarter"
         keyInsight:
           type: string
           description: Single most important lesson for KAMs calling this archetype
@@ -745,53 +1081,70 @@ components:
 
     MLPrediction:
       type: object
+      description: Per-seller response from the XGBoost model.
       properties:
         sellerId:
           type: string
+          example: S-20001
         churnProb:
           type: number
           minimum: 0
           maximum: 1
+          description: Churn probability. Multiply by 92 to get the ML-derived risk score.
           example: 0.9943
         topFeatures:
           type: array
+          description: Top 3 feature names by importance for this prediction
           items:
             type: string
-          example: [pnsPct_last, blPct_last, loginPct_last]
+          example: [loginPct_drop, blPct_drop, hasCompetitor]
         modelVersion:
           type: string
           example: xgb-v1
 
     MLStats:
       type: object
+      description: |
+        XGBoost model statistics. Returned by both `GET /ml/stats` and `POST /ml/train`.
+        `POST /ml/train` additionally populates `previousAuc`, `swapped`, and `featureImportances`.
       properties:
         trainingExamples:
           type: integer
-          example: 500
+          description: Total labeled examples in the training corpus
+          example: 523
         auc:
           type: number
-          example: 0.81
+          description: ROC-AUC of the current model on a held-out 20 % test split
+          example: 0.77
         previousAuc:
           type: number
-          example: 0.79
+          description: AUC of the model that was active before this retrain (train endpoint only)
+          example: 0.75
         swapped:
           type: boolean
+          description: True if the new model replaced the old one (train endpoint only; requires new AUC > old AUC + 0.01)
         topFeatures:
           type: array
+          description: Top 5 feature names by global importance
           items:
             type: string
+          example: [loginPct_drop, blPct_drop, hasCompetitor, disposition, loginPct_last]
         featureImportances:
           type: object
+          description: Importance score for all 18 features (train endpoint only)
           additionalProperties:
             type: number
         nextRetrainAt:
           type: integer
+          description: Training corpus size at which a scheduled retrain is recommended
           example: 5000
         lastTrainedAt:
           type: string
           format: date-time
+          example: "2026-05-16T02:30:00Z"
         modelActive:
           type: boolean
+          description: False only if no model file exists yet (first startup before seeding completes)
 
   responses:
     NotFound:
