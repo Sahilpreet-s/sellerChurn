@@ -1,7 +1,7 @@
 {
   "trainingExamples": 500,
   "auc": 0.8305,
-  "previousAuc": 0.8928,
+  "previousAuc": 0.8305,
   "swapped": false,
   "topFeatures": [
     "churnReasonCount",
@@ -31,6 +31,6 @@
     "hasExecCommitment": 0.0908
   },
   "nextRetrainAt": 5000,
-  "lastTrainedAt": "2026-05-15T19:44:56.609470Z",
+  "lastTrainedAt": "2026-05-16T01:52:03.218648Z",
   "modelActive": true
 }

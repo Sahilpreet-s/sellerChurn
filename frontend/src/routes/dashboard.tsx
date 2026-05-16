@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertTriangle, TrendingDown, TrendingUp, Users, IndianRupee,
-  Search, ChevronRight, ChevronLeft, Settings,
+  Search, ChevronRight, ChevronLeft, Settings, Sparkles,
 } from "lucide-react";
 
 // ─── View type ────────────────────────────────────────────────────────────────
@@ -287,16 +287,20 @@ function Dashboard() {
     };
   }, [viewSellers]);
 
-  const pageTitle = view === "platform" ? "Platform Issues"
-                  : view === "upsell"   ? "Upsell Opportunities"
-                  : "Seller Churn";
+  const pageTitle = view === "platform" ? "Platform Issues Dashboard"
+                  : view === "upsell"   ? "Upsell Opportunities Dashboard"
+                  : "Seller Churn Dashboard";
 
   return (
     <div>
-      <header className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="px-6 py-3">
-          <p className="text-xs text-muted-foreground">Workspace / {pageTitle}</p>
-          <h1 className="mt-0.5 text-xl font-semibold tracking-tight">{pageTitle}</h1>
+      <header className="border-b border-border/50 bg-background/70 backdrop-blur-xl sticky top-0 z-20">
+        <div className="flex items-center gap-2.5 px-6 py-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-background shrink-0">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <span className="text-sm font-semibold tracking-tight">ChurnGuard</span>
+          <span className="text-muted-foreground/40">·</span>
+          <span className="text-sm text-muted-foreground">{pageTitle}</span>
         </div>
       </header>
 
@@ -315,7 +319,7 @@ function Dashboard() {
             </>
           ) : (
             <>
-              <StatCard icon={Users}         label="Sellers in cohort" value={String(computedStats.total)}  sub="Renewal in exactly 90 days" delay={0} />
+              <StatCard icon={Users}         label="Sellers in cohort" value={String(computedStats.total)}  sub="Renewing within 90 days" delay={0} />
               <StatCard icon={AlertTriangle} label="High risk"          value={String(computedStats.high)}   sub={computedStats.total > 0 ? `${Math.round((computedStats.high / computedStats.total) * 100)}% of cohort` : undefined} delay={80} />
               <StatCard icon={TrendingDown}  label="Medium risk"        value={String(computedStats.medium)} sub="Watch closely" delay={160} />
               <StatCard icon={IndianRupee}   label="ARR at risk"        value={`₹${(computedStats.arrAtRisk / 100000).toFixed(1)}L`} sub="From high-risk sellers" delay={240} />

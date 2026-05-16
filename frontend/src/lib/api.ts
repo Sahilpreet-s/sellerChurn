@@ -1,9 +1,16 @@
 import type { Seller, CallInsight } from "./mock-sellers";
 
-const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8080/api/v1";
+// Server-side (SSR): use absolute URL directly. Browser: use relative path so
+// Vite's /api proxy forwards the request and avoids cross-origin (CORS) errors.
+const BASE =
+  typeof window === "undefined"
+    ? ((import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8080/api/v1")
+    : "/api/v1";
 
 async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
-  const url = new URL(BASE + path);
+  // new URL() requires an absolute URL; in the browser supply origin as base so relative paths work
+  const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+  const url = new URL(BASE + path, origin);
   if (params) Object.entries(params).forEach(([k, v]) => v && url.searchParams.set(k, v));
   const r = await fetch(url.toString());
   if (!r.ok) throw new Error(`GET ${path} → ${r.status}`);
