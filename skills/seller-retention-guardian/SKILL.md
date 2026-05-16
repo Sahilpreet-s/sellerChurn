@@ -1,8 +1,7 @@
-
-## Name: ChurnGaurd
-
-## Description: 
-Analyse B2B marketplace seller churn risk using a three-tier pipeline — Tier 1 rule-based inactive detection, Tier 2 XGBoost probability scoring across 18 behavioural features, Tier 3 LLM cause classification and KAM retention guide generation. Use when identifying which sellers are at risk of not renewing, classifying churn cause as External (competitor pressure) / Seller Disengaged (platform or behavioural) / Mixed, generating actionable retention playbooks for sales executives, or running nightly cohort triage. Signal names are IndiaMART-specific: BL = Buy-Lead, PNS = Push Notification System, LMS = Lead Management System, CQS = Content Quality Score, KAM = Key Account Manager.
+---
+name: seller-retention-guardian
+description: Analyse B2B marketplace seller churn risk using a three-tier pipeline — Tier 1 rule-based inactive detection, Tier 2 XGBoost probability scoring across 18 behavioural features, Tier 3 LLM cause classification and KAM retention guide generation. Use when identifying which sellers are at risk of not renewing, classifying churn cause as External (competitor pressure) / Seller Disengaged (platform or behavioural) / Mixed, generating actionable retention playbooks for sales executives, or running nightly cohort triage. Signal names are IndiaMART-specific: BL = Buy-Lead, PNS = Push Notification System, LMS = Lead Management System, CQS = Content Quality Score, KAM = Key Account Manager.
+---
 
 # ChurnGaurd
 

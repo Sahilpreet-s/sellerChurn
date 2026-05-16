@@ -1,7 +1,7 @@
 """
 Full three-tier seller analysis via the LangGraph agent streaming endpoint.
 
-Requires the Seller Retention Guardian stack to be running:
+Requires the ChurnGaurd stack to be running:
     docker compose up   (starts ml:8001 → backend:8080 → frontend:5173)
 
 Usage:

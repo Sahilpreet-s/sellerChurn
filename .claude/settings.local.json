@@ -2,8 +2,8 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\imart\\\\Downloads\\\\Seller Retention Guardian\" -Recurse -File | Where-Object {$_.Extension -eq '.md'} | Select-Object FullName)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\imart\\\\Downloads\\\\Seller Retention Guardian\" -Recurse -File | Where-Object {$_.Name -match 'skill|SKILL'} | Select-Object FullName)"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\imart\\\\Downloads\\\\ChurnGaurd\" -Recurse -File | Where-Object {$_.Extension -eq '.md'} | Select-Object FullName)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\imart\\\\Downloads\\\\ChurnGaurd\" -Recurse -File | Where-Object {$_.Name -match 'skill|SKILL'} | Select-Object FullName)"
     ]
   }
 }

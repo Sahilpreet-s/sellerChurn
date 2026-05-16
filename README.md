@@ -846,7 +846,7 @@ The original taxonomy (BEHAVIORAL / PLATFORM_FAILURE / EXTERNAL / MIXED) had two
 ## Project Structure
 
 ```
-Seller Retention Guardian/
+ChurnGaurd/
 ├── backend/                          # Go/Gin API server
 │   ├── cmd/server/main.go            # Entry point
 │   ├── internal/
