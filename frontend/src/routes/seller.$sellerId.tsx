@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, useCallback } from "react";
 import {
-  riskBand, metricLabels, statusMeta,
+  riskBand, metricLabels, statusMeta, countMetrics,
   churnCauseMeta, archetypeMeta,
   type Seller, type MetricHistory, type CallInsight, type ChurnCause,
+  type LeadsMonthData,
 } from "@/lib/mock-sellers";
 import {
   fetchSeller, logOutcome, fetchRetentionGuide, fetchMLPrediction, fetchMLStats,
@@ -18,7 +19,7 @@ import {
   ArrowLeft, AlertTriangle, TrendingDown, TrendingUp, Phone, Quote,
   Zap, Brain, CheckCircle2, Upload, FileText,
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
@@ -223,6 +224,15 @@ function SellerDetail() {
                     {causeMeta.label}
                   </span>
                   <span className="text-xs" title={archMeta.description}>{archMeta.emoji} {seller.archetype}</span>
+                  {(() => {
+                    const days = seller.metrics.blActiveDays ?? [];
+                    const v = days.length > 0 ? days[days.length - 1].value : null;
+                    return v !== null ? (
+                      <span className="text-xs text-muted-foreground border rounded px-1.5 py-0.5" title="BL active days this month">
+                        {v}d active
+                      </span>
+                    ) : null;
+                  })()}
                 </div>
               </div>
             </div>
@@ -320,17 +330,25 @@ function SellerDetail() {
           <TabsContent value="behavior" className="mt-4">
             <h2 className="mb-4 text-lg font-semibold tracking-tight">Behavior — past 3 months</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {(Object.keys(seller.metrics) as Array<keyof Seller["metrics"]>).map((key) => (
-                <MetricCard key={key} label={metricLabels[key]} data={seller.metrics[key]} invert={key === "retailBlRecommendedPct"} />
-              ))}
+              {(Object.keys(seller.metrics) as Array<keyof Seller["metrics"]>)
+                .filter((key) => key !== "blActiveDays")
+                .map((key) => (
+                  <MetricCard
+                    key={key}
+                    label={metricLabels[key]}
+                    data={seller.metrics[key] ?? []}
+                    invert={key === "retailBlRecommendedPct" || key === "blni"}
+                    isCount={countMetrics.has(key)}
+                  />
+                ))}
             </div>
           </TabsContent>
 
           {/* ── Leads chart ── */}
           <TabsContent value="leads" className="mt-4">
             <h2 className="mb-1 text-lg font-semibold tracking-tight">IndiaMART leads — past 6 months</h2>
-            <p className="mb-4 text-sm text-muted-foreground">Monthly volume of buyer enquiries, Buy-Leads consumed, and PNS calls received.</p>
-            <LeadsChart />
+            <p className="mb-4 text-sm text-muted-foreground">Monthly volume of buyer enquiries, Buy-Leads consumed, and lead consumption timing.</p>
+            <LeadsChart data={seller.leadsHistory ?? []} />
           </TabsContent>
 
           {/* ── Call insights ── */}
@@ -734,7 +752,7 @@ function GuideSectionList({ sections }: { sections: GuideEntry[] | GuideSection[
 
 // ─── MetricCard ───────────────────────────────────────────────────────────────
 
-function MetricCard({ label, data, invert }: { label: string; data: MetricHistory[]; invert?: boolean }) {
+function MetricCard({ label, data, invert, isCount }: { label: string; data: MetricHistory[]; invert?: boolean; isCount?: boolean }) {
   if (data.length === 0) {
     return (
       <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
@@ -751,6 +769,8 @@ function MetricCard({ label, data, invert }: { label: string; data: MetricHistor
   const delta = last - first;
   const isBad = invert ? delta > 0 : delta < 0;
   const TrendIcon = delta >= 0 ? TrendingUp : TrendingDown;
+  const suffix = isCount ? "" : label.includes("Score") ? "" : "%";
+  const yDomain: [number | "auto", number | "auto"] = isCount ? [0, "auto"] : [0, 100];
 
   return (
     <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
@@ -758,7 +778,7 @@ function MetricCard({ label, data, invert }: { label: string; data: MetricHistor
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight">{last.toFixed(0)}{label.includes("Score") ? "" : "%"}</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight">{last.toFixed(0)}{suffix}</p>
           </div>
           <div className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${isBad ? "bg-destructive/15 text-destructive" : "bg-success/15 text-success"}`}>
             <TrendIcon className="h-3 w-3" />
@@ -770,7 +790,7 @@ function MetricCard({ label, data, invert }: { label: string; data: MetricHistor
             <LineChart data={data} margin={{ top: 5, right: 5, bottom: 0, left: -25 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} domain={[0, 100]} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} domain={yDomain} />
               <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} />
               <Line type="monotone" dataKey="value" stroke={isBad ? "var(--destructive)" : "var(--success)"} strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
@@ -872,12 +892,88 @@ function CallInsightsList({ insights }: { insights: CallInsight[] }) {
 
 // ─── LeadsChart ───────────────────────────────────────────────────────────────
 
-function LeadsChart() {
+function LeadsChart({ data }: { data: LeadsMonthData[] }) {
+  if (data.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-16 text-center text-sm text-muted-foreground">
+          Lead volume data not available — requires IndiaMART warehouse integration.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const latest = data[data.length - 1];
+  const totalConsumed = data.reduce((s, d) => s + d.blConsumed, 0);
+  const totalEnq = data.reduce((s, d) => s + d.totalEnq, 0);
+  const totalLapsed = data.reduce((s, d) => s + d.blLapsed, 0);
+  const fastPct = latest.blConsumed > 0
+    ? Math.round((latest.cons0to4hrs / latest.blConsumed) * 100)
+    : 0;
+
+  const tooltipStyle = { background: "var(--background)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 };
+
   return (
-    <Card>
-      <CardContent className="py-16 text-center text-sm text-muted-foreground">
-        Lead volume data not available — requires IndiaMART warehouse integration.
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      {/* Stat cards */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+        {[
+          { label: "BL Consumed (6m)", value: totalConsumed },
+          { label: "Total Enquiries (6m)", value: totalEnq },
+          { label: "BL Lapsed (6m)", value: totalLapsed, warn: totalLapsed > totalConsumed },
+          { label: "Consumed <4 hrs (latest)", value: `${fastPct}%`, good: fastPct >= 40 },
+        ].map(({ label, value, warn, good }) => (
+          <Card key={label} className={`transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${warn ? "border-destructive/30 bg-destructive/5" : good ? "border-success/30 bg-success/5" : ""}`}>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className={`mt-1 text-2xl font-semibold tracking-tight ${warn ? "text-destructive" : good ? "text-success" : ""}`}>{value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Monthly volume chart */}
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-sm font-medium mb-4">Monthly lead volume</p>
+          <div className="h-52">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -20 }} barGap={2} barCategoryGap="30%">
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="totalEnq" name="Enquiries" fill="var(--primary)" radius={[3, 3, 0, 0]} opacity={0.8} />
+                <Bar dataKey="blConsumed" name="BL Consumed" fill="var(--success)" radius={[3, 3, 0, 0]} opacity={0.8} />
+                <Bar dataKey="blLapsed" name="BL Lapsed" fill="var(--destructive)" radius={[3, 3, 0, 0]} opacity={0.7} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Consumption timing chart */}
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-sm font-medium mb-1">Lead consumption timing</p>
+          <p className="text-xs text-muted-foreground mb-4">How quickly this seller acts on new buy leads — faster is better.</p>
+          <div className="h-52">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -20 }} barCategoryGap="30%">
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="cons0to4hrs" name="0–4 hrs" stackId="a" fill="var(--success)" opacity={0.9} />
+                <Bar dataKey="cons4to24hrs" name="4–24 hrs" stackId="a" fill="var(--warning)" opacity={0.85} />
+                <Bar dataKey="consGt1day" name=">1 day" stackId="a" fill="var(--destructive)" opacity={0.75} radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

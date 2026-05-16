@@ -29,6 +29,16 @@ export type CallInsight = {
   source?: "AUDIO" | "MERP" | "MANUAL";
 };
 
+export type LeadsMonthData = {
+  month: string;
+  blConsumed: number;
+  totalEnq: number;
+  cons0to4hrs: number;
+  cons4to24hrs: number;
+  consGt1day: number;
+  blLapsed: number;
+};
+
 export type Seller = {
   id: string;
   name: string;
@@ -53,7 +63,10 @@ export type Seller = {
     retailBlRecommendedPct: MetricHistory[];
     catalogScore: MetricHistory[];
     cqs: MetricHistory[];
+    blni: MetricHistory[];
+    blActiveDays: MetricHistory[];
   };
+  leadsHistory?: LeadsMonthData[];
   callInsights?: CallInsight[];
 };
 
@@ -92,4 +105,9 @@ export const metricLabels: Record<keyof Seller["metrics"], string> = {
   retailBlRecommendedPct: "% Retail BL Recommended",
   catalogScore:           "Catalog Score",
   cqs:                    "Content Quality Score",
+  blni:                   "BLNI %",
+  blActiveDays:           "Active Days",
 };
+
+// Keys that display as raw counts (no % suffix, not charted on 0-100 axis)
+export const countMetrics = new Set<keyof Seller["metrics"]>(["blActiveDays"]);

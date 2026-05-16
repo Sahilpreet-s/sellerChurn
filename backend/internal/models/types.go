@@ -25,28 +25,42 @@ type CallInsight struct {
 
 // SellerMetrics holds 3-month time-series for each engagement signal.
 type SellerMetrics struct {
-	LoginPct              []MetricHistory `json:"loginPct"`
-	BlConsumptionPct      []MetricHistory `json:"blConsumptionPct"`
-	PnsPickupRatePct      []MetricHistory `json:"pnsPickupRatePct"`
-	LmsReplyRatePct       []MetricHistory `json:"lmsReplyRatePct"`
+	LoginPct               []MetricHistory `json:"loginPct"`
+	BlConsumptionPct       []MetricHistory `json:"blConsumptionPct"`
+	PnsPickupRatePct       []MetricHistory `json:"pnsPickupRatePct"`
+	LmsReplyRatePct        []MetricHistory `json:"lmsReplyRatePct"`
 	RetailBlRecommendedPct []MetricHistory `json:"retailBlRecommendedPct"`
-	CatalogScore          []MetricHistory `json:"catalogScore"`
-	Cqs                   []MetricHistory `json:"cqs"`
+	CatalogScore           []MetricHistory `json:"catalogScore"`
+	Cqs                    []MetricHistory `json:"cqs"`
+	Blni                   []MetricHistory `json:"blni"`
+	BlActiveDays           []MetricHistory `json:"blActiveDays"`
+}
+
+// LeadsMonthData holds one month of IndiaMART lead volume and consumption data.
+type LeadsMonthData struct {
+	Month        string `json:"month"`
+	BlConsumed   int    `json:"blConsumed"`
+	TotalEnq     int    `json:"totalEnq"`
+	Cons0to4hrs  int    `json:"cons0to4hrs"`
+	Cons4to24hrs int    `json:"cons4to24hrs"`
+	ConsGt1day   int    `json:"consGt1day"`
+	BlLapsed     int    `json:"blLapsed"`
 }
 
 // RawSeller is the on-disk representation (sellers.json). No derived fields.
 type RawSeller struct {
-	ID          string        `json:"id"`
-	Name        string        `json:"name"`
-	Company     string        `json:"company"`
-	City        string        `json:"city"`
-	Category    string        `json:"category"`
-	PackageType string        `json:"packageType"`
-	ARR         int           `json:"arr"`
-	Status      string        `json:"status"`
-	PriorChurn  bool          `json:"priorChurn"`
-	Metrics     SellerMetrics `json:"metrics"`
-	CallInsights []CallInsight `json:"callInsights"`
+	ID           string           `json:"id"`
+	Name         string           `json:"name"`
+	Company      string           `json:"company"`
+	City         string           `json:"city"`
+	Category     string           `json:"category"`
+	PackageType  string           `json:"packageType"`
+	ARR          int              `json:"arr"`
+	Status       string           `json:"status"`
+	PriorChurn   bool             `json:"priorChurn"`
+	Metrics      SellerMetrics    `json:"metrics"`
+	LeadsHistory []LeadsMonthData `json:"leadsHistory"`
+	CallInsights []CallInsight    `json:"callInsights"`
 }
 
 // Seller is the fully enriched object served to the frontend.
