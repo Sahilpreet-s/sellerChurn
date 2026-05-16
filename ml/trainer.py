@@ -8,6 +8,7 @@ import os
 import joblib
 import numpy as np
 from datetime import datetime
+from typing import Optional
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
 import xgboost as xgb
@@ -25,6 +26,9 @@ FEATURE_COLS = [
     "priorChurn",    "daysToRenewal", "arr_norm",
     "hasCompetitor", "disposition", "churnReasonCount", "hasExecCommitment",
 ]
+
+# Loaded once at startup; updated in-place after each successful retrain.
+_model: Optional[xgb.XGBClassifier] = None
 
 
 def load_training_data(db_path: str):
@@ -49,6 +53,7 @@ def load_training_data(db_path: str):
 
 
 def train(db_path: str = DB_PATH) -> dict:
+    global _model
     X, y = load_training_data(db_path)
     n = len(X)
     if n < 50:
@@ -71,11 +76,9 @@ def train(db_path: str = DB_PATH) -> dict:
     y_prob = model.predict_proba(X_test)[:, 1]
     auc = roc_auc_score(y_test, y_prob) if len(set(y_test)) > 1 else 0.5
 
-    # Feature importances
     importances = dict(zip(FEATURE_COLS, model.feature_importances_.tolist()))
     top_features = sorted(importances, key=importances.get, reverse=True)[:5]
 
-    # Load old AUC and only swap if improved
     old_auc = 0.0
     if os.path.exists(STATS_PATH):
         with open(STATS_PATH) as f:
@@ -85,6 +88,7 @@ def train(db_path: str = DB_PATH) -> dict:
     swapped = False
     if auc > old_auc + 0.01 or not os.path.exists(MODEL_PATH):
         joblib.dump(model, MODEL_PATH)
+        _model = model  # update in-memory reference immediately
         swapped = True
 
     stats = {
@@ -106,12 +110,14 @@ def train(db_path: str = DB_PATH) -> dict:
 
 def predict(features: list) -> tuple[float, list[str]]:
     """Returns (churn_probability, top_3_feature_names)."""
-    if not os.path.exists(MODEL_PATH):
-        return 0.5, []
-    model = joblib.load(MODEL_PATH)
+    global _model
+    if _model is None:
+        if not os.path.exists(MODEL_PATH):
+            return 0.5, []
+        _model = joblib.load(MODEL_PATH)
     X = np.array([features], dtype=np.float32)
-    prob = float(model.predict_proba(X)[0, 1])
-    importances = dict(zip(FEATURE_COLS, model.feature_importances_.tolist()))
+    prob = float(_model.predict_proba(X)[0, 1])
+    importances = dict(zip(FEATURE_COLS, _model.feature_importances_.tolist()))
     top3 = sorted(importances, key=importances.get, reverse=True)[:3]
     return prob, top3
 

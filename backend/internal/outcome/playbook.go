@@ -46,6 +46,33 @@ func (s *Store) GetOutcomesForSynthesis() ([]RawOutcomeRow, error) {
 	return out, nil
 }
 
+// GetInsightsByArchetype returns call insights (from transcripts/MERP notes) for sellers
+// whose logged outcomes match the given archetype. Used to enrich the synthesizer prompt.
+func (s *Store) GetInsightsByArchetype(archetype string) ([]models.CallInsight, error) {
+	rows, err := s.db.Query(`
+		SELECT DISTINCT ci.sentiment, ci.quote, ci.issues, ci.commitment_by_exec
+		FROM call_insights ci
+		INNER JOIN outcomes o ON o.seller_id = ci.seller_id
+		WHERE o.archetype = ?
+		ORDER BY ci.created_at DESC
+		LIMIT 10
+	`, archetype)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []models.CallInsight
+	for rows.Next() {
+		var c models.CallInsight
+		var issuesJSON string
+		rows.Scan(&c.Sentiment, &c.Quote, &issuesJSON, &c.CommitmentByExec)
+		json.Unmarshal([]byte(issuesJSON), &c.Issues)
+		out = append(out, c)
+	}
+	return out, nil
+}
+
 // SavePlaybookEntry upserts a synthesized playbook entry keyed by archetype.
 func (s *Store) SavePlaybookEntry(e models.PlaybookEntry) error {
 	synthesis, _ := json.Marshal(e)

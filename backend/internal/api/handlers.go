@@ -224,6 +224,19 @@ func (st *Store) LogOutcome(c *gin.Context) {
 
 	totalOutcomes := st.OutcomeStore.CountOutcomes()
 
+	// Feed labeled example to ML training corpus (fire-and-forget, never blocks response).
+	go func() {
+		payload, _ := json.Marshal(map[string]any{
+			"sellerId":        sellerID,
+			"outcome":         body.Outcome,
+			"featureSnapshot": features,
+		})
+		resp, err := http.Post(st.MLServiceURL+"/outcomes", "application/json", bytes.NewReader(payload))
+		if err == nil {
+			resp.Body.Close()
+		}
+	}()
+
 	// Rebuild playbook asynchronously every 10 real outcomes so the guide improves over time.
 	// Invalidate guide cache so next generation uses the fresh playbook.
 	if totalOutcomes%10 == 0 {
@@ -386,7 +399,7 @@ func (st *Store) TriggerTraining(c *gin.Context) {
 		return
 	}
 	defer resp.Body.Close()
-	var result map[string]interface{}
+	var result map[string]any
 	json.NewDecoder(resp.Body).Decode(&result)
 	c.JSON(http.StatusOK, result)
 }
