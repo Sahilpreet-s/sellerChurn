@@ -7,9 +7,8 @@ import {
   type LeadsMonthData,
 } from "@/lib/mock-sellers";
 import {
-  fetchSeller, logOutcome, fetchRetentionGuide, fetchMLPrediction, fetchMLStats,
-  triggerRetraining, uploadAudio, extractMerpNote,
-  type GuideSection, type MLPrediction, type MLStats,
+  fetchSeller, logOutcome, fetchRetentionGuide, uploadAudio, extractMerpNote,
+  type GuideSection,
 } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +36,7 @@ export const Route = createFileRoute("/seller/$sellerId")({
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
         <p className="text-muted-foreground">Seller not found.</p>
-        <Link to="/" search={{ view: "churn" }} className="mt-4 inline-block text-primary underline">Back to dashboard</Link>
+        <Link to="/dashboard" search={{ view: "churn" }} className="mt-4 inline-block text-primary underline">Back to dashboard</Link>
       </div>
     </div>
   ),
@@ -52,6 +51,17 @@ function fmtDate(iso: string) {
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return iso;
   return `${d} ${MONTHS_LABEL[m - 1]} ${y}`;
+}
+
+function archetypeChipClass(archetype: string): string {
+  switch (archetype) {
+    case "Overwhelmed Starter": return "bg-destructive/10 text-destructive border-destructive/25";
+    case "ROI Doubter":         return "bg-warning/10 text-warning border-warning/25";
+    case "Platform Victim":     return "bg-yellow-500/10 text-yellow-600 border-yellow-500/25";
+    case "Competitor Target":   return "bg-primary/10 text-primary border-primary/25";
+    case "Seasonal Dip":        return "bg-success/10 text-success border-success/25";
+    default:                    return "bg-muted text-muted-foreground border-border";
+  }
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -72,11 +82,6 @@ function SellerDetail() {
   const [guideSections, setGuideSections] = useState<GuideSection[] | null>(null);
   const [guideError, setGuideError] = useState<string | null>(null);
 
-  // ML state
-  const [mlPred, setMlPred] = useState<MLPrediction | null>(null);
-  const [mlStats, setMlStats] = useState<MLStats | null>(null);
-  const [mlLoading, setMlLoading] = useState(false);
-  const [retrainResult, setRetrainResult] = useState<string | null>(null);
 
   // MERP note state
   const [merpNote, setMerpNote] = useState("");
@@ -121,32 +126,6 @@ function SellerDetail() {
     }
   }, [seller]);
 
-  const handleLoadML = useCallback(async () => {
-    if (!seller || mlLoading) return;
-    setMlLoading(true);
-    try {
-      const [pred, stats] = await Promise.all([
-        fetchMLPrediction(seller.id),
-        fetchMLStats(),
-      ]);
-      setMlPred(pred);
-      setMlStats(stats);
-    } catch {
-      setMlPred(null);
-    } finally {
-      setMlLoading(false);
-    }
-  }, [seller, mlLoading]);
-
-  const handleRetrain = useCallback(async () => {
-    try {
-      const result = await triggerRetraining();
-      setRetrainResult(`Retrained on ${result.trainingExamples} examples. AUC: ${result.auc.toFixed(3)} (was ${result.previousAuc.toFixed(3)}). ${result.swapped ? "New model deployed." : "No improvement — current model kept."}`);
-      await handleLoadML();
-    } catch {
-      setRetrainResult("Retrain failed — ML service may not be running.");
-    }
-  }, [handleLoadML]);
 
   const handleMerpExtract = useCallback(async () => {
     if (!seller || !merpNote.trim() || merpLoading) return;
@@ -184,7 +163,7 @@ function SellerDetail() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground">Seller not found.</p>
-          <Button onClick={() => router.navigate({ to: "/", search: { view: "churn" } })} className="mt-4">Back to dashboard</Button>
+          <Button onClick={() => router.navigate({ to: "/dashboard", search: { view: "churn" } })} className="mt-4">Back to dashboard</Button>
         </div>
       </div>
     );
@@ -200,41 +179,59 @@ function SellerDetail() {
   return (
     <div className="min-h-screen">
       <header className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="mx-auto max-w-7xl px-6 py-5">
-          <Link to="/" search={{ view: "churn" }} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-all duration-150 hover:text-foreground hover:-translate-x-0.5">
-            <ArrowLeft className="h-4 w-4" /> Back to cohort
+        <div className="mx-auto max-w-7xl px-6 py-4">
+          <Link to="/dashboard" search={{ view: "churn" }} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-all duration-150 hover:text-foreground hover:-translate-x-0.5">
+            <ArrowLeft className="h-4 w-4" /> Back
           </Link>
-          <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary/25 to-primary/5 text-lg font-semibold text-primary ring-2 ring-primary/10 shadow-lg">
+
+          <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-start gap-5 animate-slide-in-left">
+
+              {/* Avatar — app-icon shape, risk-coloured ring */}
+              <div className={`relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-xl font-bold shadow-md ring-2 transition-shadow duration-300 ${band === "High" ? "from-destructive/30 to-destructive/10 text-destructive ring-destructive/40 risk-high-badge" : band === "Medium" ? "from-warning/30 to-warning/10 text-warning ring-warning/40" : "from-success/30 to-success/10 text-success ring-success/30"}`}>
                 {seller.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 {seller.priorChurn && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive border-2 border-background flex items-center justify-center text-[8px] text-white font-bold" title="Prior churn">!</span>
+                  <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive border-2 border-background flex items-center justify-center text-[9px] text-destructive-foreground font-bold animate-fade-in-scale shadow-sm" title="Prior churn">!</span>
                 )}
               </div>
-              <div>
+
+              {/* Identity text */}
+              <div className="min-w-0">
                 <h1 className="text-2xl font-semibold tracking-tight">{seller.name}</h1>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <span>{seller.company} · {seller.city}</span>
-                  <Badge variant="outline">{seller.packageType}</Badge>
-                  <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${statusMeta[seller.status as keyof typeof statusMeta]?.className ?? ""}`}>
+                <p className="mt-1 text-sm text-muted-foreground">{seller.company} · {seller.city}</p>
+
+                {/* Row 1 — operational: package · status · churn cause */}
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                  <Badge variant="outline" className="text-xs font-medium">{seller.packageType}</Badge>
+                  <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${statusMeta[seller.status as keyof typeof statusMeta]?.className ?? ""}`}>
                     {seller.status}
                   </span>
-                  <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${causeMeta.className}`} title={causeMeta.description}>
+                  <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${causeMeta.className}`} title={causeMeta.description}>
                     {causeMeta.label}
                   </span>
-                  <span className="text-xs" title={archMeta.description}>{archMeta.emoji} {seller.archetype}</span>
+                </div>
+
+                {/* Row 2 — analytical context: archetype chip + active days */}
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${archetypeChipClass(seller.archetype)}`}
+                    title={archMeta.description}
+                  >
+                    {archMeta.emoji} {seller.archetype}
+                  </span>
                   {(() => {
                     const days = seller.metrics.blActiveDays ?? [];
                     const v = days.length > 0 ? days[days.length - 1].value : null;
                     return v !== null ? (
-                      <span className="text-xs text-muted-foreground border rounded px-1.5 py-0.5" title="BL active days this month">
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" title="BL active days this month">
+                        <span className={`h-1.5 w-1.5 rounded-full ${v >= 20 ? "bg-success" : v >= 10 ? "bg-warning" : "bg-destructive"}`} />
                         {v}d active
                       </span>
                     ) : null;
                   })()}
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -243,72 +240,66 @@ function SellerDetail() {
       <main className="mx-auto max-w-7xl px-6 py-8 space-y-6">
         {/* Prior churn warning */}
         {seller.priorChurn && (
-          <Card className="border-destructive/40 bg-destructive/5">
-            <CardContent className="pt-4 pb-4 flex items-start gap-3 text-sm">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-              <div>
-                <p className="font-semibold text-destructive">Prior churn detected</p>
-                <p className="text-muted-foreground mt-0.5">
-                  This seller was previously on a Free/lapsed plan before re-acquiring. Prior churn is the strongest single predictor of repeat churn — risk score is elevated by 30%. Treat as critical regardless of current signal levels.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-start gap-3 rounded-xl border-l-4 border-destructive bg-destructive/5 px-4 py-3 text-sm animate-slide-in-left">
+            <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold text-destructive">Prior churn detected</p>
+              <p className="text-muted-foreground mt-0.5">
+                Previously on a Free/lapsed plan before re-acquiring. Prior churn is the strongest single predictor of repeat churn — risk elevated 30%. Treat as critical regardless of current signal levels.
+              </p>
+            </div>
+          </div>
         )}
 
         {/* Summary cards */}
-        <div className="grid gap-4 md:grid-cols-5">
-          <Card className={`transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none ${band === "High" ? "border-destructive/40 bg-destructive/5" : band === "Medium" ? "border-warning/40 bg-warning/5" : "border-success/40 bg-success/5"}`}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground"><AlertTriangle className="h-4 w-4" /> Risk score</div>
-              <p className="mt-2 text-4xl font-semibold tracking-tight">{seller.riskScore}<span className="text-lg text-muted-foreground">/100</span></p>
-              <p className="mt-1 text-sm font-medium">{band} risk of churn</p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Risk score */}
+          <Card className={`animate-slide-in-up transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none ${band === "High" ? "border-destructive/40 bg-destructive/5" : band === "Medium" ? "border-warning/40 bg-warning/5" : "border-success/40 bg-success/5"}`}>
+            <CardContent className="pt-6 pb-6">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                <AlertTriangle className="h-4 w-4" /> Risk score
+              </div>
+              <div className="flex items-end gap-1.5">
+                <p className="text-5xl font-semibold tracking-tight leading-none">{seller.riskScore}</p>
+                <p className="text-xl text-muted-foreground leading-none mb-0.5">/100</p>
+              </div>
+              <p className={`mt-2 text-sm font-medium ${band === "High" ? "text-destructive" : band === "Medium" ? "text-warning" : "text-success"}`}>{band} risk of churn</p>
+              <div className="mt-4 h-1.5 rounded-full bg-muted/60 overflow-hidden">
+                <div
+                  className={`h-full rounded-full animate-bar-fill ${band === "High" ? "bg-destructive" : band === "Medium" ? "bg-warning" : "bg-success"}`}
+                  style={{ width: `${seller.riskScore}%` }}
+                />
+              </div>
             </CardContent>
           </Card>
-          <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none">
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">Renewal date</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight">{fmtDate(seller.renewalDate)}</p>
-              <p className="mt-1 text-sm text-muted-foreground">in {seller.daysToRenewal} days</p>
+
+          {/* Renewal date */}
+          <Card className="animate-slide-in-up transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none" style={{ animationDelay: '80ms' }}>
+            <CardContent className="pt-6 pb-6">
+              <p className="text-sm text-muted-foreground mb-3">Renewal date</p>
+              <p className="text-3xl font-semibold tracking-tight">{fmtDate(seller.renewalDate)}</p>
+              <p className={`mt-2 text-sm font-medium ${seller.daysToRenewal <= 30 ? "text-destructive" : seller.daysToRenewal <= 60 ? "text-warning" : "text-muted-foreground"}`}>
+                in {seller.daysToRenewal} days
+              </p>
+              <div className="mt-4 h-1.5 rounded-full bg-muted/60 overflow-hidden">
+                <div
+                  className={`h-full rounded-full animate-bar-fill ${seller.daysToRenewal <= 30 ? "bg-destructive" : seller.daysToRenewal <= 60 ? "bg-warning" : "bg-primary/50"}`}
+                  style={{ width: `${Math.min(100, Math.max(5, 100 - (Math.max(0, seller.daysToRenewal) / 180) * 100))}%`, animationDelay: '300ms' }}
+                />
+              </div>
             </CardContent>
           </Card>
-          <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none">
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">Annual revenue</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight">₹{(seller.arr / 1000).toFixed(0)}k</p>
-              <p className="mt-1 text-sm text-muted-foreground">{seller.category}</p>
-            </CardContent>
-          </Card>
-          <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none">
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">Churn cause</p>
-              <p className="mt-2 text-xl font-semibold tracking-tight">{causeMeta.label}</p>
-              <p className="mt-1 text-xs text-muted-foreground">→ {causeMeta.owner}</p>
-            </CardContent>
-          </Card>
-          <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none">
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">Seller ID</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight">{seller.id}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{(seller.churnCauseReason ?? "").slice(0, 55)}{seller.churnCauseReason?.length > 55 ? "…" : ""}</p>
+
+          {/* Annual revenue */}
+          <Card className="animate-slide-in-up transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default select-none" style={{ animationDelay: '160ms' }}>
+            <CardContent className="pt-6 pb-6">
+              <p className="text-sm text-muted-foreground mb-3">Annual revenue</p>
+              <p className="text-3xl font-semibold tracking-tight">₹{(seller.arr / 1000).toFixed(0)}k</p>
+              <p className="mt-2 text-sm text-muted-foreground">{seller.category}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{seller.packageType} package · {causeMeta.owner}</p>
             </CardContent>
           </Card>
         </div>
-
-        {/* Why flagged */}
-        <Card className="transition-all duration-200 hover:shadow-md">
-          <CardHeader><CardTitle className="text-base">Why this seller is flagged</CardTitle></CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              {buildReasons(seller).map((r, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
-                  <span>{r}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
 
         {/* Tabs */}
         <Tabs defaultValue="behavior">
@@ -316,9 +307,9 @@ function SellerDetail() {
             {[
               ["behavior", "Past behaviour"],
               ["leads", "IndiaMART Leads"],
+              ["flagged", "Why flagged"],
               ["calls", "Call insights"],
               ["guide", "Retention guide"],
-              ["ml", "ML insights"],
             ].map(([v, label]) => (
               <TabsTrigger key={v} value={v} className="rounded-lg border bg-background px-4 py-2 text-foreground shadow-sm transition-all duration-150 hover:bg-muted hover:scale-[1.02] data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:border-foreground data-[state=active]:shadow-md data-[state=active]:scale-[1.02]">
                 {label}
@@ -349,6 +340,23 @@ function SellerDetail() {
             <h2 className="mb-1 text-lg font-semibold tracking-tight">IndiaMART leads — past 6 months</h2>
             <p className="mb-4 text-sm text-muted-foreground">Monthly volume of buyer enquiries, Buy-Leads consumed, and lead consumption timing.</p>
             <LeadsChart data={seller.leadsHistory ?? []} />
+          </TabsContent>
+
+          {/* ── Why flagged ── */}
+          <TabsContent value="flagged" className="mt-4">
+            <h2 className="mb-4 text-lg font-semibold tracking-tight">Why this seller is flagged</h2>
+            <Card>
+              <CardContent className="pt-6">
+                <ul className="space-y-2 text-sm">
+                  {buildReasons(seller).map((r, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* ── Call insights ── */}
@@ -462,134 +470,6 @@ function SellerDetail() {
             )}
           </TabsContent>
 
-          {/* ── ML Insights ── */}
-          <TabsContent value="ml" className="mt-4">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight">ML Insights</h2>
-                <p className="text-sm text-muted-foreground">XGBoost model prediction alongside rule-based score.</p>
-              </div>
-              <Button onClick={handleLoadML} disabled={mlLoading} variant="outline" className="gap-2">
-                <Brain className="h-4 w-4" />
-                {mlLoading ? "Loading…" : mlPred ? "Refresh" : "Load ML prediction"}
-              </Button>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Rule vs ML scores */}
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground mb-4">Score comparison</p>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Rule engine</span>
-                        <span className="font-semibold">{seller.riskScore}/100</span>
-                      </div>
-                      <div className="h-3 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full bg-destructive rounded-full" style={{ width: `${seller.riskScore}%` }} />
-                      </div>
-                    </div>
-                    {mlPred ? (
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>XGBoost model</span>
-                          <span className="font-semibold">{(mlPred.churnProb * 100).toFixed(0)}% churn prob</span>
-                        </div>
-                        <div className="h-3 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full bg-primary rounded-full" style={{ width: `${mlPred.churnProb * 100}%` }} />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="rounded-md bg-muted/40 p-3 text-sm text-muted-foreground text-center">
-                        Click "Load ML prediction" to see XGBoost score
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Feature importances */}
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground mb-4">Top signals driving ML prediction</p>
-                  {mlPred?.topFeatures ? (
-                    <div className="space-y-2">
-                      {mlPred.topFeatures.map((f, i) => (
-                        <div key={f} className="flex items-center gap-3 text-sm">
-                          <span className="text-muted-foreground w-4">{i + 1}.</span>
-                          <span className="flex-1 font-mono text-xs bg-muted px-2 py-1 rounded">{f}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-md bg-muted/40 p-3 text-sm text-muted-foreground text-center">
-                      Load prediction to see feature importances
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Model stats */}
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground mb-4">Model statistics</p>
-                  {mlStats ? (
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Training examples</span>
-                        <span className="font-semibold">{mlStats.trainingExamples.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">AUC (holdout)</span>
-                        <span className="font-semibold">{mlStats.auc.toFixed(3)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Auto-retrain at</span>
-                        <span className="font-semibold">{mlStats.nextRetrainAt?.toLocaleString()} outcomes</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Last trained</span>
-                        <span className="font-semibold text-xs">{mlStats.lastTrainedAt ? new Date(mlStats.lastTrainedAt).toLocaleString() : "—"}</span>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                          <span>Progress to auto-retrain</span>
-                          <span>{Math.round((mlStats.trainingExamples / (mlStats.nextRetrainAt ?? 5000)) * 100)}%</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full transition-all"
-                            style={{ width: `${Math.min(100, (mlStats.trainingExamples / (mlStats.nextRetrainAt ?? 5000)) * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-md bg-muted/40 p-3 text-sm text-muted-foreground text-center">
-                      Load prediction to see model stats
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Retrain */}
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground mb-2">Manual retrain</p>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Retrains XGBoost on all labeled outcomes. System auto-retrains at 5,000 real examples — this triggers it early for demo purposes.
-                  </p>
-                  <Button onClick={handleRetrain} variant="outline" className="w-full gap-2">
-                    <Brain className="h-4 w-4" /> Trigger Retraining Now
-                  </Button>
-                  {retrainResult && (
-                    <p className="mt-3 text-xs text-muted-foreground">{retrainResult}</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
         </Tabs>
       </main>
     </div>

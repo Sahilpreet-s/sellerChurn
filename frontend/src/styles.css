@@ -177,6 +177,10 @@
   50%       { box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive) 30%, transparent); }
 }
 
+@keyframes bar-fill {
+  from { width: 0%; }
+}
+
 @layer utilities {
   .animate-slide-in-up {
     animation: slide-in-up 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -188,6 +192,10 @@
 
   .animate-fade-in-scale {
     animation: fade-in-scale 0.35s ease both;
+  }
+
+  .animate-bar-fill {
+    animation: bar-fill 1s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   /* 3-D card — driven by --rx / --ry CSS custom properties set from JS */
