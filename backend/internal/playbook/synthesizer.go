@@ -59,11 +59,14 @@ func Synthesize(store *outcome.Store) ([]models.PlaybookEntry, error) {
 			time.Sleep(synthesisDelay)
 		}
 
+		// Fetch call insights for this archetype to enrich the Gemini prompt
+		insights, _ := store.GetInsightsByArchetype(archetype)
+
 		// Retry once on 429 — the per-minute window resets after the suggested delay
 		var entry *models.PlaybookEntry
 		var err error
 		for attempt := 0; attempt < 2; attempt++ {
-			entry, err = synthesizeArchetype(archetype, cases)
+			entry, err = synthesizeArchetype(archetype, cases, insights)
 			if err == nil {
 				break
 			}
@@ -93,7 +96,7 @@ func isRateLimitError(err error) bool {
 	return err != nil && (strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "RESOURCE_EXHAUSTED"))
 }
 
-func synthesizeArchetype(archetype string, cases []outcome.RawOutcomeRow) (*models.PlaybookEntry, error) {
+func synthesizeArchetype(archetype string, cases []outcome.RawOutcomeRow, insights []models.CallInsight) (*models.PlaybookEntry, error) {
 	resolved := 0
 	for _, c := range cases {
 		if c.Outcome == "Resolved" {
@@ -120,10 +123,29 @@ func synthesizeArchetype(archetype string, cases []outcome.RawOutcomeRow) (*mode
 			i+1, disp, reasons, commitment, c.Outcome))
 	}
 
+	// Append call transcript/MERP insights if available — gives Gemini real seller voice
+	var insightBlock strings.Builder
+	if len(insights) > 0 {
+		insightBlock.WriteString("\nCALL TRANSCRIPT & MERP INSIGHTS (actual seller quotes and issues for this archetype):\n")
+		for i, ins := range insights {
+			insightBlock.WriteString(fmt.Sprintf("%d. [%s]", i+1, ins.Sentiment))
+			if ins.Quote != "" {
+				insightBlock.WriteString(fmt.Sprintf(" Quote: \"%s\"", ins.Quote))
+			}
+			if len(ins.Issues) > 0 {
+				insightBlock.WriteString(fmt.Sprintf(" | Issues: %s", strings.Join(ins.Issues, ", ")))
+			}
+			if ins.CommitmentByExec != "" {
+				insightBlock.WriteString(fmt.Sprintf(" | Exec promised: %s", ins.CommitmentByExec))
+			}
+			insightBlock.WriteString("\n")
+		}
+	}
+
 	userPrompt := fmt.Sprintf(`Analyze these %d retention call outcomes for sellers classified as "%s" (overall retention rate: %.0f%%).
 
 OUTCOMES:
-%s
+%s%s
 Based on patterns in this outcome data, return a JSON object with exactly these keys:
 {
   "winningApproaches": ["2-4 specific approaches or exec commitments that correlated with Resolved outcomes"],
@@ -131,7 +153,7 @@ Based on patterns in this outcome data, return a JSON object with exactly these 
   "keyInsight": "single most important lesson for a KAM before calling a %s seller",
   "doNotDo": ["2-3 specific mistakes to avoid with this archetype"]
 }`,
-		len(cases), archetype, retentionRate*100, sb.String(), archetype)
+		len(cases), archetype, retentionRate*100, sb.String(), insightBlock.String(), archetype)
 
 	raw, err := llm.Call(synthesisSystem, userPrompt, 2048)
 	if err != nil {
