@@ -745,10 +745,10 @@ The LLM's role shifts over time: it stops classifying (XGBoost handles that) and
 
 ## 14. Skills Folder
 
-This repository ships a complete Claude Code skill in `skills/seller-retention-guardian/`:
+This repository ships a complete Claude Code skill in `.claude/skills/seller-retention-guardian/`:
 
 ```
-skills/seller-retention-guardian/
+.claude/skills/seller-retention-guardian/
 ├── SKILL.md                        # Main skill document with 3-tier pipeline guide
 ├── scripts/
 │   ├── score.py                    # Standalone risk scorer (no API needed)
@@ -881,7 +881,7 @@ Seller Retention Guardian/
 │       │   ├── api.ts                # Backend API client
 │       │   └── mock-sellers.ts       # Fallback mock data + canonical types
 │       └── styles.css                # Tailwind v4 oklch colour tokens
-├── skills/seller-retention-guardian/ # Claude Code skill
+├── .claude/skills/seller-retention-guardian/ # Claude Code skill
 ├── docker-compose.yml
 └── CLAUDE.md                         # Claude Code project guidance
 ```
