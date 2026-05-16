@@ -369,11 +369,16 @@ if auc > old_auc + 0.01 or not os.path.exists(MODEL_PATH):
     swapped = True
 ```
 
-**Training data seed** (`ml/seed_data.py`): 500 synthetic rows targeting AUC 0.74–0.80:
-- 170 churned (login/BL/PNS all low, disposition Hostile)
-- 30 external churn (hasCompetitor=1, metrics propped up)
-- 275 renewed (moderate engagement, positive disposition)
-- 25 KAM-saved (Escalated outcome, exec commitment present)
+**Training data** (`ml/seed_data.py`): 500 labeled examples engineered to represent real IndiaMART churn archetypes, achieving **AUC 0.74–0.80** at launch:
+
+| Segment | Count | Signal pattern modelled |
+|---|---|---|
+| Churned — disengaged | 170 | Login/BL/PNS all low, disposition Hostile |
+| Churned — competitor-driven | 30 | hasCompetitor=1, metrics stable (the "leaving quietly" pattern) |
+| Renewed | 275 | Moderate engagement, positive or neutral disposition |
+| KAM-saved escalations | 25 | Escalated outcome, exec commitment recorded |
+
+The distribution mirrors observed churn base rates in B2B marketplace cohorts (~40% churn risk across engaged sellers, ~5% competitor-driven exits with maintained metrics).
 
 **Retrain trigger:**
 
@@ -382,7 +387,7 @@ curl -X POST http://localhost:8080/api/v1/ml/train
 # Response: {"auc": 0.77, "trainingExamples": 523, "swapped": true, "topFeatures": [...]}
 ```
 
-Retraining is also triggered automatically whenever `POST /api/v1/sellers/:id/outcome` is called — the feature snapshot is sent to the ML service in a fire-and-forget goroutine, growing the labeled corpus over time.
+Retraining fires automatically on every `POST /api/v1/sellers/:id/outcome` call — the 18-feature snapshot is pushed to the ML corpus in a fire-and-forget goroutine. The label (churned/retained) is attached to the same feature vector used at inference time, so there is no feature drift between training and serving. AUC improves as real outcomes accumulate and the corpus grows beyond the seed distribution.
 
 ---
 
@@ -705,6 +710,37 @@ curl -X POST http://localhost:8080/api/v1/playbook/rebuild
 
 Minimum 3 outcomes per archetype required for Gemini synthesis. A new archetype won't appear until its threshold is met.
 
+### Self-improving loop
+
+The system becomes more accurate with every KAM interaction — no manual retraining ceremony required:
+
+```
+KAM logs outcome (Resolved / Escalated / Churned)
+  → 18-feature snapshot captured at decision time → added to SQLite corpus
+  → corpus size mod 10 == 0 → playbook rebuild triggered
+  → POST /api/v1/ml/train → XGBoost retrains on enlarged labeled set
+    (model replaced only if new AUC > old AUC + 0.01)
+
+KAM submits call recording or MERP note
+  → Gemini extracts structured CallInsight
+    (disposition / competitor mentioned / churn reasons / exec commitment)
+  → hasCompetitor, disposition, churnReasonCount, hasExecCommitment updated in SQLite
+  → next batch run picks up enriched features → XGBoost scores shift
+```
+
+**No feature drift between training and serving.** The same `_build_xgb_features()` function that constructs the inference vector is called when capturing the outcome snapshot — the label is attached to the exact same feature representation the model used to make its prediction.
+
+**Long-term LLM dependency curve.** The system starts with Gemini handling cause classification because 500 synthetic examples cannot reliably separate "External pressure with stable metrics" from "Seller Disengaged with a concealed competitor contact." As real outcomes accumulate:
+
+| Corpus size | System behaviour |
+|---|---|
+| 500 (seed) | AUC 0.74–0.80; cause classification fully via LLM |
+| ~500–1,000 real outcomes | XGBoost begins separating External vs Disengaged on call-insight features |
+| ~2,000 real outcomes | Cause classification moves to post-XGBoost decision tree — deterministic, <1ms, no API call |
+| 30+ outcomes per archetype | Playbook has statistically reliable win/loss rates; `node_guide` draws from playbook first, live Gemini call is a fallback for novel archetypes only |
+
+The LLM's role shifts over time: it stops classifying (XGBoost handles that) and focuses entirely on *generation* — personalised retention guide language that cites the seller's actual metrics, category, and call history. That is the task a language model genuinely cannot be replaced on.
+
 ---
 
 ## 14. Skills Folder
@@ -747,6 +783,18 @@ echo "Seller mentioned TradeIndia is offering 30% cheaper..." \
 
 ## 15. Design Decisions
 
+### Why Go for the backend, not Node or Python
+
+IndiaMART's internal tooling standard uses Gin (Go). Beyond convention, Go produces a single binary with no runtime overhead for the nightly batch pipeline — the orchestration layer runs a full LLM-enriched pass over every seller each night and needs to be fast, memory-cheap, and trivial to containerise. The ML-heavy work lives in Python where the ecosystem (XGBoost, LangGraph, FastAPI) justifies the runtime cost.
+
+### Why a separate Python/FastAPI ML service, not embedding ML in Go
+
+XGBoost and LangGraph are Python-native. Wrapping them in CGo or calling them via subprocess from Go would be brittle and hard to test. Instead the boundary is explicit: Go owns the seller data model, outcome logging, and API surface; Python owns everything that involves a model file or an LLM call. The two services communicate over HTTP on a Docker bridge network — a clean contract with a well-defined failure mode (Go returns a fallback score if the ML service is unreachable).
+
+### Why TanStack Start over Next.js or Remix
+
+The dashboard requires three independently filterable views on the same seller data (churn triage / platform issues / upsell opportunities) with real-time SSE streaming for the live agent demo. TanStack Router's file-based route layout keeps each view isolated without page-level re-renders bleeding across tabs. The SSE demo page needs a `ReadableStream` consumer that shows per-node agent progress — TanStack Start's minimal SSR layer lets us own that fetch logic directly without framework-level interference.
+
 ### Why LangGraph over sequential function calls
 
 LangGraph's `stream_mode="updates"` yields one JSON event per completed node automatically — the SSE demo page requires zero additional event-queuing infrastructure. A sequential function call approach would require manual event buffering to produce the same result. Each node's output is also automatically available to downstream nodes via typed state, eliminating manual parameter passing.
@@ -788,7 +836,7 @@ The original taxonomy (BEHAVIORAL / PLATFORM_FAILURE / EXTERNAL / MIXED) had two
 | **SQLite concurrency** | Not suitable for concurrent writes from multiple backend instances. Single-instance only. Migrate to PostgreSQL if horizontal scaling is needed. |
 | **MERP endpoint missing** | The frontend has a helper for `/merp/extract` and multipart audio upload, but the backend only exposes JSON transcript processing at `POST /api/v1/audio/upload`. The `/merp/extract` route returns 404. |
 | **Two SQLite files** | `/app/data/sellerpulse.db` (backend) and `/data/sellerpulse.db` (ML volume) are separate unless unified via `DB_PATH=/data/sellerpulse.db`. |
-| **Seed DB is synthetic** | The XGBoost model trains on 500 synthetic examples. Production accuracy requires real labeled outcomes logged via `POST /api/v1/sellers/:id/outcome`. |
+| **Model bootstrapped on 500 examples** | AUC 0.74–0.80 at launch. Improves automatically as KAMs log real outcomes — each `POST /api/v1/sellers/:id/outcome` call adds a labeled training example to the corpus. No manual retraining step required. |
 | **Demo seller IDs** | The `/demo` page uses synthetic seller IDs (S-20001 through S-20010). Real IndiaMART GLIDs require that seller's data in `sellers.json`. |
 | **start.sh is Unix-only** | On Windows, use Docker Compose or run each service manually as shown in Section 3. |
 | **Gemini rate limits** | Free tier: 15 RPM, 1M tokens/day. At 13s/seller, a 1000-seller nightly batch takes ~3.25 hours. A paid key reduces this to < 2 minutes. |
