@@ -36,7 +36,7 @@ Seller metrics
   Rebuild playbook from accumulated outcomes
 ```
 
-**Why three tiers, not LLM-only:** Tier 1 inactives are unambiguous — no LLM call needed; saves quota and reduces batch time by ~13s per inactive seller. XGBoost (Tier 2) handles the continuous risk spectrum deterministically; LLM (Tier 3) handles cause nuance and natural-language guide generation. Running Gemini on every seller would cost ~13× more in API time with no accuracy gain on the scoring dimension. See [pipeline-design.md](references/pipeline-design.md) for full decision log.
+**Why three tiers, not LLM-only:** Tier 1 inactives are unambiguous — no LLM call needed; saves quota and reduces batch time by ~13s per inactive seller. XGBoost (Tier 2) handles the continuous risk spectrum deterministically; LLM (Tier 3) handles cause nuance and natural-language guide generation. Running Gemini on every seller would cost ~13× more in API time with no accuracy gain on the scoring dimension. See [README.md] for full decision log.
 
 ---
 
