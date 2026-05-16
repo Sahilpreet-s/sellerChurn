@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   riskBand, metricLabels, statusMeta, countMetrics,
   churnCauseMeta, archetypeMeta,
@@ -7,8 +7,8 @@ import {
   type LeadsMonthData,
 } from "@/lib/mock-sellers";
 import {
-  fetchSeller, logOutcome, fetchRetentionGuide, uploadAudio, extractMerpNote,
-  type GuideSection,
+  fetchSeller, logOutcome, fetchPlaybook,
+  type OutcomeBody, type PlaybookEntry,
 } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,10 +16,24 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, AlertTriangle, TrendingDown, TrendingUp, Phone, Quote,
-  Zap, Brain, CheckCircle2, Upload, FileText,
+  CheckCircle2, BookOpen,
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const CHURN_REASONS = [
+  { value: "low_lead_quality", label: "Low lead quality" },
+  { value: "price",            label: "Price / ROI" },
+  { value: "competitor",       label: "Competitor offer" },
+  { value: "platform_issue",   label: "Platform issue" },
+  { value: "no_roi",           label: "No ROI seen" },
+  { value: "disengaged",       label: "Disengaged" },
+  { value: "other",            label: "Other" },
+] as const;
+
+type ChurnReasonValue = (typeof CHURN_REASONS)[number]["value"];
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -76,21 +90,20 @@ function SellerDetail() {
   const [outcomeError, setOutcomeError] = useState<string | null>(null);
   const [outcomeLoading, setOutcomeLoading] = useState(false);
   const [totalOutcomes, setTotalOutcomes] = useState<number | null>(null);
+  const [showOutcomeForm, setShowOutcomeForm] = useState(false);
 
-  // AI guide state
-  const [guideLoading, setGuideLoading] = useState(false);
-  const [guideSections, setGuideSections] = useState<GuideSection[] | null>(null);
-  const [guideError, setGuideError] = useState<string | null>(null);
+  // Outcome form fields
+  const [disposition, setDisposition] = useState("");
+  const [churnReasons, setChurnReasons] = useState<ChurnReasonValue[]>([]);
+  const [competitorMentioned, setCompetitorMentioned] = useState("");
+  const [execCommitment, setExecCommitment] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [customReason, setCustomReason] = useState("");
 
+  // Playbook from historical outcomes
+  const [playbookEntry, setPlaybookEntry] = useState<PlaybookEntry | null>(null);
+  const [showPlaybook, setShowPlaybook] = useState(false);
 
-  // MERP note state
-  const [merpNote, setMerpNote] = useState("");
-  const [merpAgent, setMerpAgent] = useState("");
-  const [merpLoading, setMerpLoading] = useState(false);
-  const [merpError, setMerpError] = useState<string | null>(null);
-
-  // Audio upload state
-  const [audioError, setAudioError] = useState<string | null>(null);
 
   // ── All hooks must be declared before any early return ──────────────────────
 
@@ -99,7 +112,16 @@ function SellerDetail() {
     setOutcomeLoading(true);
     setOutcomeError(null);
     try {
-      const result = await logOutcome(seller.id, outcome);
+      const body: OutcomeBody = {
+        outcome,
+        disposition,
+        churnReasons: churnReasons.filter(r => r !== "other"),
+        competitorMentioned,
+        execCommitment,
+        followUpDate,
+        customReason,
+      };
+      const result = await logOutcome(seller.id, body);
       setOutcomeSaved(outcome);
       setTotalOutcomes(result.totalOutcomes);
       if (outcome === "Resolved") {
@@ -110,51 +132,17 @@ function SellerDetail() {
     } finally {
       setOutcomeLoading(false);
     }
-  }, [seller, outcomeLoading]);
-
-  const handleGenerateGuide = useCallback(async () => {
-    if (!seller) return;
-    setGuideLoading(true);
-    setGuideError(null);
-    try {
-      const result = await fetchRetentionGuide(seller.id);
-      setGuideSections(result.sections);
-    } catch {
-      setGuideError("Could not connect to AI service. Make sure the Go backend is running.");
-    } finally {
-      setGuideLoading(false);
-    }
-  }, [seller]);
+  }, [seller, outcomeLoading, disposition, churnReasons, competitorMentioned, execCommitment, followUpDate, customReason]);
 
 
-  const handleMerpExtract = useCallback(async () => {
-    if (!seller || !merpNote.trim() || merpLoading) return;
-    setMerpLoading(true);
-    setMerpError(null);
-    try {
-      const insight = await extractMerpNote(merpNote, seller.id, merpAgent || "Unknown Agent");
-      setSeller(s => s ? { ...s, callInsights: [insight, ...(s.callInsights ?? [])] } : s);
-      setMerpNote("");
-      setMerpAgent("");
-    } catch {
-      setMerpError("Could not extract MERP note — check that the Go backend is running.");
-    } finally {
-      setMerpLoading(false);
-    }
-  }, [seller, merpNote, merpAgent, merpLoading]);
-
-  const handleAudioUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !seller) return;
-    setAudioError(null);
-    try {
-      const insight = await uploadAudio(file, seller.id, "Demo Agent");
-      setSeller(s => s ? { ...s, callInsights: [insight, ...(s.callInsights ?? [])] } : s);
-    } catch {
-      setAudioError("Audio upload failed — check that the Go backend is running.");
-    }
-    e.target.value = "";
-  }, [seller]);
+  useEffect(() => {
+    fetchPlaybook()
+      .then(entries => {
+        const match = entries.find(e => e.archetype === seller?.archetype);
+        if (match) setPlaybookEntry(match);
+      })
+      .catch(() => {});
+  }, [seller?.archetype]);
 
   // ── Early return after all hooks ────────────────────────────────────────────
 
@@ -178,60 +166,43 @@ function SellerDetail() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="mx-auto max-w-7xl px-6 py-4">
-          <Link to="/dashboard" search={{ view: "churn" }} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-all duration-150 hover:text-foreground hover:-translate-x-0.5">
-            <ArrowLeft className="h-4 w-4" /> Back
+      <header className="border-b bg-background">
+        <div className="mx-auto max-w-7xl px-6 pt-3 pb-4">
+          <Link to="/dashboard" search={{ view: "churn" }} className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground mb-2">
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
           </Link>
 
-          <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-start gap-5 animate-slide-in-left">
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-bold ring-2 ${band === "High" ? "from-destructive/30 to-destructive/10 text-destructive ring-destructive/40 risk-high-badge" : band === "Medium" ? "from-warning/30 to-warning/10 text-warning ring-warning/40" : "from-success/30 to-success/10 text-success ring-success/30"}`}>
+              {seller.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+              {seller.priorChurn && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive border-2 border-background flex items-center justify-center text-[8px] text-destructive-foreground font-bold" title="Prior churn">!</span>
+              )}
+            </div>
 
-              {/* Avatar — app-icon shape, risk-coloured ring */}
-              <div className={`relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-xl font-bold shadow-md ring-2 transition-shadow duration-300 ${band === "High" ? "from-destructive/30 to-destructive/10 text-destructive ring-destructive/40 risk-high-badge" : band === "Medium" ? "from-warning/30 to-warning/10 text-warning ring-warning/40" : "from-success/30 to-success/10 text-success ring-success/30"}`}>
-                {seller.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                {seller.priorChurn && (
-                  <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive border-2 border-background flex items-center justify-center text-[9px] text-destructive-foreground font-bold animate-fade-in-scale shadow-sm" title="Prior churn">!</span>
-                )}
+            {/* Identity */}
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold tracking-tight leading-tight">{seller.name}</h1>
+              <p className="text-xs text-muted-foreground">{seller.company} · {seller.city}</p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <Badge variant="outline" className="text-xs font-medium">{seller.packageType}</Badge>
+                <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${statusMeta[seller.status as keyof typeof statusMeta]?.className ?? ""}`}>{seller.status}</span>
+                <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${causeMeta.className}`} title={causeMeta.description}>{causeMeta.label}</span>
+                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${archetypeChipClass(seller.archetype)}`} title={archMeta.description}>
+                  {archMeta.emoji} {seller.archetype}
+                </span>
+                {(() => {
+                  const days = seller.metrics.blActiveDays ?? [];
+                  const v = days.length > 0 ? days[days.length - 1].value : null;
+                  return v !== null ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className={`h-1.5 w-1.5 rounded-full ${v >= 20 ? "bg-success" : v >= 10 ? "bg-warning" : "bg-destructive"}`} />
+                      {v}d active
+                    </span>
+                  ) : null;
+                })()}
               </div>
-
-              {/* Identity text */}
-              <div className="min-w-0">
-                <h1 className="text-2xl font-semibold tracking-tight">{seller.name}</h1>
-                <p className="mt-1 text-sm text-muted-foreground">{seller.company} · {seller.city}</p>
-
-                {/* Row 1 — operational: package · status · churn cause */}
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                  <Badge variant="outline" className="text-xs font-medium">{seller.packageType}</Badge>
-                  <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${statusMeta[seller.status as keyof typeof statusMeta]?.className ?? ""}`}>
-                    {seller.status}
-                  </span>
-                  <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${causeMeta.className}`} title={causeMeta.description}>
-                    {causeMeta.label}
-                  </span>
-                </div>
-
-                {/* Row 2 — analytical context: archetype chip + active days */}
-                <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${archetypeChipClass(seller.archetype)}`}
-                    title={archMeta.description}
-                  >
-                    {archMeta.emoji} {seller.archetype}
-                  </span>
-                  {(() => {
-                    const days = seller.metrics.blActiveDays ?? [];
-                    const v = days.length > 0 ? days[days.length - 1].value : null;
-                    return v !== null ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" title="BL active days this month">
-                        <span className={`h-1.5 w-1.5 rounded-full ${v >= 20 ? "bg-success" : v >= 10 ? "bg-warning" : "bg-destructive"}`} />
-                        {v}d active
-                      </span>
-                    ) : null;
-                  })()}
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
@@ -361,83 +332,79 @@ function SellerDetail() {
 
           {/* ── Call insights ── */}
           <TabsContent value="calls" className="mt-4">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight">Sales call insights</h2>
-                <p className="text-sm text-muted-foreground">Issues raised by seller in calls — surfaced as churn drivers.</p>
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <label className="cursor-pointer">
-                  <input type="file" accept="audio/*" className="hidden" onChange={handleAudioUpload} />
-                  <span className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted cursor-pointer">
-                    <Upload className="h-4 w-4" /> Process audio
-                  </span>
-                </label>
-                {audioError && <p className="text-xs text-destructive">{audioError}</p>}
-              </div>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold tracking-tight">Sales call insights</h2>
+              <p className="text-sm text-muted-foreground">Issues raised by seller in calls — surfaced as churn drivers.</p>
             </div>
-
-            {/* MERP note input */}
-            <Card className="mb-4">
-              <CardContent className="pt-4 pb-4 space-y-3">
-                <p className="text-sm font-semibold flex items-center gap-2"><FileText className="h-4 w-4" /> Extract from MERP note</p>
-                <Textarea
-                  placeholder="Paste raw MERP CRM note here... e.g. 'Called Vikram. Maxi | Talked | Said TradeIndia offering 30% less...'"
-                  value={merpNote}
-                  onChange={e => setMerpNote(e.target.value)}
-                  rows={3}
-                  className="text-sm"
-                />
-                <div className="flex gap-2">
-                  <input
-                    placeholder="Agent name"
-                    value={merpAgent}
-                    onChange={e => setMerpAgent(e.target.value)}
-                    className="flex-1 rounded-md border px-3 py-2 text-sm bg-background"
-                  />
-                  <Button onClick={handleMerpExtract} disabled={!merpNote.trim() || merpLoading} size="sm">
-                    {merpLoading ? "Extracting..." : "Extract with AI"}
-                  </Button>
-                </div>
-                {merpError && <p className="text-xs text-destructive">{merpError}</p>}
-              </CardContent>
-            </Card>
-
             <CallInsightsList insights={seller.callInsights ?? []} />
           </TabsContent>
 
           {/* ── Retention guide ── */}
           <TabsContent value="guide" className="mt-4">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight">How to retain {seller.name}</h2>
-                <p className="text-sm text-muted-foreground">Talking points and actions tailored to this seller's data.</p>
-              </div>
-              <Button onClick={handleGenerateGuide} disabled={guideLoading} className="gap-2">
-                <Zap className="h-4 w-4" />
-                {guideLoading ? "Generating…" : guideSections ? "Regenerate AI guide" : "Generate AI guide"}
-              </Button>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold tracking-tight">How to retain {seller.name}</h2>
+              <p className="text-sm text-muted-foreground">Personalized playbook based on this seller's signals.</p>
             </div>
 
-            {guideError && (
-              <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-                {guideError}
-              </div>
+            {/* Playbook from similar historical cases */}
+            {playbookEntry && (
+              <Card className="mb-4 border-primary/25 bg-primary/5">
+                <CardContent className="pt-4 pb-4 space-y-3">
+                  <button
+                    onClick={() => setShowPlaybook(p => !p)}
+                    className="w-full flex items-center justify-between gap-2 text-left"
+                  >
+                    <p className="text-sm font-semibold flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-primary" />
+                      Playbook: {playbookEntry.archetype}
+                    </p>
+                    <span className="text-xs text-muted-foreground">
+                      {playbookEntry.sampleSize} similar cases · {Math.round(playbookEntry.retentionRate * 100)}% retained
+                      <span className="ml-2">{showPlaybook ? "▲" : "▼"}</span>
+                    </span>
+                  </button>
+                  {showPlaybook && (
+                    <>
+                  {playbookEntry.keyInsight && (
+                    <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">
+                      "{playbookEntry.keyInsight}"
+                    </p>
+                  )}
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    {playbookEntry.winningApproaches.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-success mb-1.5">What works</p>
+                        <ul className="space-y-1">
+                          {playbookEntry.winningApproaches.slice(0, 4).map((w, i) => (
+                            <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
+                              <span className="text-success shrink-0 mt-0.5">✓</span> {w}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {playbookEntry.doNotDo.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-destructive mb-1.5">Avoid</p>
+                        <ul className="space-y-1">
+                          {playbookEntry.doNotDo.slice(0, 4).map((d, i) => (
+                            <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
+                              <span className="text-destructive shrink-0 mt-0.5">✗</span> {d}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
             )}
 
-            {guideSections ? (
-              <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
-                <div className="rounded-md border bg-primary/5 border-primary/20 p-3 text-sm flex items-start gap-2">
-                  <Brain className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-muted-foreground"><span className="font-medium text-foreground">AI-generated guide</span> — personalized using this seller's exact metrics and call history.</p>
-                </div>
-                <GuideSectionList sections={guideSections} />
-              </div>
-            ) : (
-              <RetentionGuide seller={seller} />
-            )}
+            <RetentionGuide seller={seller} />
 
-            {/* Outcome logging */}
+            {/* Outcome logging form */}
             {outcomeSaved ? (
               <div className="mt-6 rounded-md border border-success/40 bg-success/5 px-4 py-3 text-sm flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
@@ -447,25 +414,113 @@ function SellerDetail() {
                 </span>
               </div>
             ) : (
-              <div className="mt-6 border-t pt-4">
-                <p className="text-xs text-muted-foreground mb-3">After the retention call, log the outcome to train the ML model:</p>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => handleOutcome("Resolved")} disabled={outcomeLoading}
-                    className="flex-1 border-success/40 text-success hover:bg-success/10">
-                    ✓ Mark Resolved
+              <div className="mt-6 border-t pt-5">
+                {!showOutcomeForm ? (
+                  <Button variant="outline" onClick={() => setShowOutcomeForm(true)} className="w-full">
+                    Log call outcome
                   </Button>
-                  <Button variant="outline" onClick={() => handleOutcome("Escalated")} disabled={outcomeLoading} className="flex-1">
-                    ↑ Escalate
-                  </Button>
-                  <Button variant="outline" onClick={() => handleOutcome("Churned")} disabled={outcomeLoading}
-                    className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10">
-                    ✗ Log as Churned
-                  </Button>
+                ) : (
+              <div className="space-y-4">
+                <p className="text-sm font-semibold">Log call outcome</p>
+
+                {/* Disposition */}
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1.5">Seller disposition on the call</p>
+                  <div className="flex gap-2">
+                    {(["Willing", "Skeptical", "Hostile"] as const).map(d => (
+                      <button key={d}
+                        onClick={() => setDisposition(prev => prev === d ? "" : d)}
+                        className={`flex-1 rounded-md border px-3 py-1.5 text-sm transition-colors ${
+                          disposition === d
+                            ? d === "Willing"   ? "bg-success/10 border-success/40 text-success font-medium"
+                            : d === "Skeptical" ? "bg-warning/10 border-warning/40 text-warning font-medium"
+                            :                    "bg-destructive/10 border-destructive/40 text-destructive font-medium"
+                            : "border-border text-muted-foreground hover:bg-muted"
+                        }`}>
+                        {d}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                {outcomeError && (
-                  <p className="mt-2 text-xs text-destructive text-center">{outcomeError}</p>
+
+                {/* Churn reasons */}
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1.5">Issues raised (select all that apply)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {CHURN_REASONS.map(({ value, label }) => (
+                      <button key={value}
+                        onClick={() => setChurnReasons(prev =>
+                          prev.includes(value) ? prev.filter(r => r !== value) : [...prev, value]
+                        )}
+                        className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                          churnReasons.includes(value)
+                            ? "bg-primary/10 border-primary/40 text-primary font-medium"
+                            : "border-border text-muted-foreground hover:bg-muted"
+                        }`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {churnReasons.includes("competitor") && (
+                  <input
+                    placeholder="Competitor name (e.g. TradeIndia)"
+                    value={competitorMentioned}
+                    onChange={e => setCompetitorMentioned(e.target.value)}
+                    className="w-full rounded-md border border-border px-3 py-2 text-sm bg-background"
+                  />
                 )}
-                <p className="mt-2 text-xs text-muted-foreground text-center">Each outcome saved = one labeled training example for the XGBoost model</p>
+
+                {churnReasons.includes("other") && (
+                  <input
+                    placeholder="Describe the issue..."
+                    value={customReason}
+                    onChange={e => setCustomReason(e.target.value)}
+                    className="w-full rounded-md border border-border px-3 py-2 text-sm bg-background"
+                  />
+                )}
+
+                <Textarea
+                  placeholder="What did you commit to the seller? e.g. 'BL filter ticket raised. Manual lead forwarding weekly until fix. ETA 2 weeks.'"
+                  value={execCommitment}
+                  onChange={e => setExecCommitment(e.target.value)}
+                  rows={2}
+                  className="text-sm"
+                />
+
+                <div className="flex items-center gap-3">
+                  <label className="text-xs text-muted-foreground whitespace-nowrap">Follow-up date</label>
+                  <input
+                    type="date"
+                    value={followUpDate}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={e => setFollowUpDate(e.target.value)}
+                    className="rounded-md border border-border px-3 py-1.5 text-sm bg-background"
+                  />
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Outcome of the call</p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => handleOutcome("Resolved")} disabled={outcomeLoading}
+                      className="flex-1 border-success/40 text-success hover:bg-success/10">
+                      ✓ Mark Resolved
+                    </Button>
+                    <Button variant="outline" onClick={() => handleOutcome("Escalated")} disabled={outcomeLoading}
+                      className="flex-1">
+                      ↑ Escalate
+                    </Button>
+                    <Button variant="outline" onClick={() => handleOutcome("Churned")} disabled={outcomeLoading}
+                      className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10">
+                      ✗ Log as Churned
+                    </Button>
+                  </div>
+                  {outcomeError && <p className="mt-2 text-xs text-destructive text-center">{outcomeError}</p>}
+                  <p className="mt-2 text-xs text-muted-foreground text-center">Each outcome = one labeled training example for the XGBoost model</p>
+                </div>
+              </div>
+                )}
               </div>
             )}
           </TabsContent>
@@ -609,7 +664,7 @@ function RetentionGuide({ seller }: { seller: Seller }) {
   );
 }
 
-function GuideSectionList({ sections }: { sections: GuideEntry[] | GuideSection[] }) {
+function GuideSectionList({ sections }: { sections: GuideEntry[] }) {
   return (
     <>
       {sections.map((sec, i) => (
@@ -700,7 +755,7 @@ function CallInsightsList({ insights }: { insights: CallInsight[] }) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
-          No call insights yet. Process an audio file or paste a MERP note above.
+          No call insights recorded for this seller yet.
         </CardContent>
       </Card>
     );
@@ -733,7 +788,6 @@ function CallInsightsList({ insights }: { insights: CallInsight[] }) {
                   <span className="text-muted-foreground">· {c.durationMin}m · {c.agent}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {c.source && <span className="text-xs text-muted-foreground border rounded px-1.5 py-0.5">{c.source}</span>}
                   <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${sentimentStyle[c.sentiment]}`}>{c.sentiment}</span>
                 </div>
               </div>

@@ -82,17 +82,36 @@ export type OutcomeResult = {
   message: string;
 };
 
-export function logOutcome(sellerId: string, outcome: string, notes?: string): Promise<OutcomeResult> {
-  return post<OutcomeResult>(`/sellers/${sellerId}/outcome`, { outcome, notes: notes ?? "" });
+export type OutcomeBody = {
+  outcome: string;
+  notes?: string;
+  disposition?: string;
+  churnReasons?: string[];
+  competitorMentioned?: string;
+  execCommitment?: string;
+  followUpDate?: string;
+  customReason?: string;
+};
+
+export function logOutcome(sellerId: string, body: OutcomeBody): Promise<OutcomeResult> {
+  return post<OutcomeResult>(`/sellers/${sellerId}/outcome`, body);
 }
 
-// ─── LLM retention guide ─────────────────────────────────────────────────────
+// ─── Playbook ─────────────────────────────────────────────────────────────────
 
-export type GuideSection = { title: string; pitch: string; actions: string[] };
-export type GuideResult = { sections: GuideSection[]; cached: boolean };
+export type PlaybookEntry = {
+  archetype: string;
+  sampleSize: number;
+  retentionRate: number;
+  winningApproaches: string[];
+  failedApproaches: string[];
+  keyInsight: string;
+  doNotDo: string[];
+  updatedAt: string;
+};
 
-export function fetchRetentionGuide(sellerId: string): Promise<GuideResult> {
-  return post<GuideResult>(`/sellers/${sellerId}/guide`);
+export function fetchPlaybook(): Promise<PlaybookEntry[]> {
+  return get<PlaybookEntry[]>("/playbook");
 }
 
 // ─── Audio pipeline ───────────────────────────────────────────────────────────
